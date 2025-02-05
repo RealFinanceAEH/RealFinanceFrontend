@@ -13,6 +13,8 @@ const Home = () => {
 
   // Загрузка данных
   useEffect(() => {
+    let isMounted = true; // Флаг для проверки, что компонент все еще смонтирован
+
     const fetchData = async () => {
       try {
         if (isOnline) {
@@ -26,33 +28,49 @@ const Home = () => {
           }));
 
           const favorites = await getFavoriteCurrencies();
-          setFavoriteCurrencies(favorites.favorite_currencies || []);
+          if (isMounted) {
+            setFavoriteCurrencies(favorites.favorite_currencies || []);
+          }
 
-          setCurrencies(
-            formattedCurrencies.map((currency) => ({
-              ...currency,
-              isTracked: favorites.favorite_currencies.includes(currency.code),
-            }))
-          );
+          const updatedCurrencies = formattedCurrencies.map((currency) => ({
+            ...currency,
+            isTracked: favorites.favorite_currencies.includes(currency.code),
+          }));
+
+          if (isMounted) {
+            setCurrencies(updatedCurrencies);
+          }
 
           // Сохраняем данные о валютах в IndexedDB
-          formattedCurrencies.forEach((currency) => saveCurrencyData(currency));
+          updatedCurrencies.forEach((currency) => saveCurrencyData(currency));
         } else {
-          // Загружаем данные из кэша
+          // Загружаем данные из кэша только для тех валют, которые есть в IndexedDB
           const cachedCurrencies = await Promise.all(
-            favoriteCurrencies.map((code) => getCurrencyData(code))
+            favoriteCurrencies.map(async (code) => {
+              const currencyData = await getCurrencyData(code);
+              return currencyData ? currencyData : null;
+            })
           );
-          setCurrencies(cachedCurrencies.filter((currency) => currency));
+
+          if (isMounted) {
+            setCurrencies(cachedCurrencies.filter((currency) => currency !== null));
+          }
         }
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchData();
-  }, [isOnline, setCurrencies, favoriteCurrencies, saveCurrencyData, getCurrencyData]);
+
+    return () => {
+      isMounted = false; // Очистка при размонтировании компонента
+    };
+  }, [isOnline]); // Зависимость только от isOnline
 
   if (isLoading) {
     return <div>Загрузка...</div>;
