@@ -13,53 +13,60 @@ const CurrencyDetail = () => {
   const [amount, setAmount] = useState(0);
   const [period, setPeriod] = useState('7d'); // По умолчанию 7 дней
 
+  // Фильтрация истории курсов по периоду
+  const filterHistoryByPeriod = (history, period) => {
+    const now = new Date();
+    let startDate;
+
+    switch (period) {
+      case '7d':
+        startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case '1m':
+        startDate = new Date(now - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case '3m':
+        startDate = new Date(now - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case '1y':
+        startDate = new Date(now - 365 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
+    }
+
+    return history.filter((item) => new Date(item.effective_date) >= startDate);
+  };
+
+  // Загрузка данных
   useEffect(() => {
     const fetchCurrencyData = async () => {
       try {
         const rateData = await getCurrencyRate(currencyCode);
         console.log('Данные курса валюты:', rateData);
-  
+
         // Проверяем, что rateData содержит корректные данные
         if (!rateData || !rateData.ask || isNaN(rateData.ask)) {
           throw new Error('Курс валюты не загружен или некорректен.');
         }
-  
+
         const rate = rateData.ask; // Используем цену покупки (ask)
-  
-        let startDate;
-        const endDate = new Date().toISOString().split('T')[0];
-  
-        switch (period) {
-          case '7d':
-            startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            break;
-          case '1m':
-            startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            break;
-          case '3m':
-            startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            break;
-          case '1y':
-            startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-            break;
-          default:
-            startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-        }
-  
-        const history = await getCurrencyHistory(currencyCode, startDate, endDate);
-  
+
+        // Загружаем историю курсов за год
+        const history = await getCurrencyHistory(currencyCode);
+
         const data = {
           code: currencyCode,
           name: currencyCode.toUpperCase(),
           rate,
-          history,
+          history, // Сохраняем историю курсов
         };
-  
+
         setCurrencyData(data);
         await saveCurrencyData(data); // Сохраняем данные в IndexedDB
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
-  
+
         // Если нет интернета, загружаем данные из кэша
         if (!isOnline) {
           const cachedData = await getCurrencyData(currencyCode);
@@ -69,7 +76,7 @@ const CurrencyDetail = () => {
         }
       }
     };
-  
+
     if (isOnline) {
       fetchCurrencyData();
     } else {
@@ -82,30 +89,40 @@ const CurrencyDetail = () => {
       };
       loadCachedData();
     }
-  }, [currencyCode, isOnline, period]);
+  }, [currencyCode, isOnline]);
+
+  // Обработчик изменения периода
+  const handlePeriodChange = (newPeriod) => {
+    setPeriod(newPeriod);
+  };
+
+  // Фильтрация истории курсов для графика
+  const filteredHistory = currencyData
+    ? filterHistoryByPeriod(currencyData.history, period)
+    : [];
 
   const handleBuy = async () => {
     if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
       alert('Ошибка: Курс валюты не загружен или некорректен.');
       return;
     }
-  
+
     if (isNaN(amount) || amount <= 0) {
       alert('Ошибка: Введите корректное количество валюты.');
       return;
     }
-  
+
     try {
       const response = await buyCurrency(currencyCode, amount);
       console.log('Ответ от сервера (покупка):', response);
-  
+
       // Обновляем локальное состояние на основе ответа сервера
       setBalances((prevBalances) => ({
         ...prevBalances,
         PLN: parseFloat(response.final_pln_balance),
         [currencyCode]: parseFloat(response.final_currency_balance),
       }));
-  
+
       alert(`Куплено ${amount} ${currencyData.code} за ${(amount * currencyData.rate).toFixed(2)} PLN`);
     } catch (error) {
       console.error('Ошибка при покупке валюты:', error);
@@ -118,23 +135,23 @@ const CurrencyDetail = () => {
       alert('Ошибка: Курс валюты не загружен или некорректен.');
       return;
     }
-  
+
     if (isNaN(amount) || amount <= 0) {
       alert('Ошибка: Введите корректное количество валюты.');
       return;
     }
-  
+
     try {
       const response = await sellCurrency(currencyCode, amount);
       console.log('Ответ от сервера (продажа):', response);
-  
+
       // Обновляем локальное состояние на основе ответа сервера
       setBalances((prevBalances) => ({
         ...prevBalances,
         PLN: parseFloat(response.final_pln_balance),
         [currencyCode]: parseFloat(response.final_currency_balance),
       }));
-  
+
       alert(`Продано ${amount} ${currencyData.code} за ${(amount * currencyData.rate).toFixed(2)} PLN`);
     } catch (error) {
       console.error('Ошибка при продаже валюты:', error);
@@ -155,32 +172,32 @@ const CurrencyDetail = () => {
       <div style={styles.periodButtonsContainer}>
         <button
           style={period === '7d' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => setPeriod('7d')}
+          onClick={() => handlePeriodChange('7d')}
         >
           7 дней
         </button>
         <button
           style={period === '1m' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => setPeriod('1m')}
+          onClick={() => handlePeriodChange('1m')}
         >
           1 месяц
         </button>
         <button
           style={period === '3m' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => setPeriod('3m')}
+          onClick={() => handlePeriodChange('3m')}
         >
           3 месяца
         </button>
         <button
           style={period === '1y' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => setPeriod('1y')}
+          onClick={() => handlePeriodChange('1y')}
         >
           1 год
         </button>
       </div>
 
       {/* Отображение графика */}
-      <Chart data={currencyData.history} />
+      <Chart data={filteredHistory} />
 
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
         <input

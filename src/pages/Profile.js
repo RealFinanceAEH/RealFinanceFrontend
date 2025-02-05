@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { styles } from '../styles/styles';
 import { getProfile, getWallet, getTransactions, depositFunds } from '../services/api';
+import { saveProfileData, getProfileData, saveBalanceData, getBalanceData, saveTransactionsData, getTransactionsData } from '../services/db';
 
 const Profile = () => {
   const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -20,22 +21,50 @@ const Profile = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Получаем данные профиля
-        const profileData = await getProfile();
-        setUser({
-          firstName: profileData.firstname, // Обратите внимание на регистр
-          lastName: profileData.lastname,   // Обратите внимание на регистр
-          email: profileData.email,
-          phone: profileData.phone,
-        });
+        let profileData, walletData, transactionsData;
 
-        // Получаем баланс
-        const walletData = await getWallet();
-        setBalance(walletData); // Убедитесь, что walletData — это объект
+        if (navigator.onLine) {
+          // Получаем данные профиля
+          profileData = await getProfile();
+          setUser({
+            firstName: profileData.firstname,
+            lastName: profileData.lastname,
+            email: profileData.email,
+            phone: profileData.phone,
+          });
+          await saveProfileData(profileData); // Сохраняем данные профиля
 
-        // Получаем историю транзакций
-        const transactionsData = await getTransactions();
-        setTransactions(transactionsData); // Убедитесь, что transactionsData — это массив
+          // Получаем баланс
+          walletData = await getWallet();
+          setBalance(walletData);
+          await saveBalanceData(walletData); // Сохраняем данные баланса
+
+          // Получаем историю транзакций
+          transactionsData = await getTransactions();
+          setTransactions(transactionsData);
+          await saveTransactionsData(transactionsData); // Сохраняем данные транзакций
+        } else {
+          // Загружаем данные из кэша
+          profileData = await getProfileData();
+          if (profileData) {
+            setUser({
+              firstName: profileData.firstname,
+              lastName: profileData.lastname,
+              email: profileData.email,
+              phone: profileData.phone,
+            });
+          }
+
+          walletData = await getBalanceData();
+          if (walletData) {
+            setBalance(walletData);
+          }
+
+          transactionsData = await getTransactionsData();
+          if (transactionsData) {
+            setTransactions(transactionsData);
+          }
+        }
       } catch (error) {
         console.error('Ошибка при загрузке данных:', error);
       }
