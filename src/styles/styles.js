@@ -360,4 +360,35 @@ formContainer: {
     color: '#555',
     marginBottom: '20px',
   },
+
+  centeredButtonContainer: {
+    display: "flex",
+    justifyContent: "center", // Центрируем кнопку внутри контейнера
+    marginTop: "20px",
+  },
+
+  centeredButton: {
+    display: "block", // Убираем flex, чтобы кнопка не растягивалась
+    textAlign: "center",
+  },
+
+  toggleButton: {
+    position: "absolute",
+    right: "1%",
+    top: "40%",
+    transform: "translateY(-50%)",
+    background: "none",
+    border: "none",
+    cursor: "pointer",
+    padding: "5px",
+    display: "flex",
+    alignItems: "center",
+  },
+
+  inputWrapper: {
+    position: "relative",
+    width: "100%",
+  }
+
 };
+

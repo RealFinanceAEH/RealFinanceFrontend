@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { styles } from '../styles/styles';
 import { loginUser } from '../services/api';
+import { Eye, EyeOff } from "lucide-react"; // Иконки для отображения/скрытия пароля
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -34,6 +36,10 @@ const Login = () => {
     }
   };
 
+  const handleRegistrationNavigate = async (e) => {
+    e.preventDefault();
+  }
+
   return (
     <div style={styles.formContainer}>
       <h2 style={styles.formTitle}>Вход</h2>
@@ -48,19 +54,35 @@ const Login = () => {
           style={styles.formInput}
           required
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Пароль"
-          value={formData.password}
-          onChange={handleChange}
-          style={styles.formInput}
-          required
-        />
+        <div style={styles.inputWrapper}>
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Пароль"
+            value={formData.password}
+            onChange={handleChange}
+            style={styles.formInput}
+            required
+          />
+          <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={styles.toggleButton}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
         <button type="submit" style={styles.formButton}>
           Войти
         </button>
       </form>
+      <div style={styles.centeredButtonContainer}>
+        <Link to="/register" style={styles.centeredButton}>
+          <button>
+              Регистрация
+          </button>
+        </Link>
+      </div>
     </div>
   );
 };

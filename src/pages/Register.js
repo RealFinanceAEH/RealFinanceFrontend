@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { styles } from '../styles/styles';
 import { registerUser } from '../services/api';
+import {Eye, EyeOff} from "lucide-react";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ const Register = () => {
     password: '',
     confirmPassword: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
@@ -82,28 +85,54 @@ const Register = () => {
           style={styles.formInput}
           required
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Пароль"
-          value={formData.password}
-          onChange={handleChange}
-          style={styles.formInput}
-          required
-        />
-        <input
-          type="password"
-          name="confirmPassword"
-          placeholder="Повторите пароль"
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          style={styles.formInput}
-          required
-        />
-        <button type="submit" style={styles.formButton}>
-          Зарегистрироваться
-        </button>
+        <div style={styles.inputWrapper}>
+          <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="Пароль"
+              value={formData.password}
+              onChange={handleChange}
+              style={styles.formInput}
+              minLength={8}
+              required
+          />
+          <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={styles.toggleButton}
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+        <div style={styles.inputWrapper}>
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            placeholder="Повторите пароль"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            style={styles.formInput}
+            required
+          />
+          <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              style={styles.toggleButton}
+          >
+            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+          <button type="submit" style={styles.formButton}>
+            Зарегистрироваться
+          </button>
       </form>
+      <div style={styles.centeredButtonContainer}>
+        <Link to="/login" style={styles.centeredButton}>
+          <button>
+            Логин
+          </button>
+        </Link>
+      </div>
     </div>
   );
 };
