@@ -108,7 +108,7 @@ const CurrencyDetail = () => {
       : [];
 
   const handleBuy = async () => {
-    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
+    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate) || parseFloat(currencyData.rate) <= 0.001 || parseFloat(currencyData.rate) === 0) return; {
       alert('Error: Currency rate is missing or invalid.');
       return;
     }
@@ -137,7 +137,7 @@ const CurrencyDetail = () => {
   };
 
   const handleSell = async () => {
-    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
+    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate) || parseFloat(currencyData.rate) <= 0.001 || parseFloat(currencyData.rate) === 0) {
       alert('Error: Currency rate is missing or invalid.');
       return;
     }
