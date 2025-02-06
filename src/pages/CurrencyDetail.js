@@ -56,7 +56,7 @@ const CurrencyDetail = () => {
           throw new Error('Currency rate data is missing or invalid.');
         }
 
-        const rate = rateData.ask; // Use the ask price
+        const rate = rateData.ask;
 
         // Load currency history for the last year
         const history = await getCurrencyHistory(currencyCode);
@@ -65,7 +65,7 @@ const CurrencyDetail = () => {
           code: currencyCode,
           name: currencyCode.toUpperCase(),
           rate,
-          history, // Save the currency history
+          history,
         };
 
         setCurrencyData(data);
@@ -122,7 +122,6 @@ const CurrencyDetail = () => {
       const response = await buyCurrency(currencyCode, amount);
       console.log('Server response (buy):', response);
 
-      // Update local state based on server response
       setBalances((prevBalances) => ({
         ...prevBalances,
         PLN: parseFloat(response.final_pln_balance),
@@ -151,7 +150,6 @@ const CurrencyDetail = () => {
       const response = await sellCurrency(currencyCode, amount);
       console.log('Server response (sell):', response);
 
-      // Update local state based on server response
       setBalances((prevBalances) => ({
         ...prevBalances,
         PLN: parseFloat(response.final_pln_balance),
