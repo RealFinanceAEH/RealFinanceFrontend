@@ -108,12 +108,12 @@ const CurrencyDetail = () => {
       : [];
 
   const handleBuy = async () => {
-    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate) || parseFloat(currencyData.rate) <= 0.001 || parseFloat(currencyData.rate) === 0) return; {
+    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
       alert('Error: Currency rate is missing or invalid.');
       return;
     }
 
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount) || amount === 0 || amount <= 0.001) {
       alert('Error: Please enter a valid amount of currency.');
       return;
     }
@@ -137,12 +137,12 @@ const CurrencyDetail = () => {
   };
 
   const handleSell = async () => {
-    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate) || parseFloat(currencyData.rate) <= 0.001 || parseFloat(currencyData.rate) === 0) {
+    if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
       alert('Error: Currency rate is missing or invalid.');
       return;
     }
 
-    if (isNaN(amount) || amount <= 0) {
+    if (isNaN(amount) || amount === 0 || amount <= 0.001) {
       alert('Error: Please enter a valid amount of currency.');
       return;
     }
@@ -217,7 +217,7 @@ const CurrencyDetail = () => {
           <input
               type="number"
               value={amount}
-              onChange={(e) => setAmount(parseFloat(e.target.value))}
+              onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
               style={{ padding: '10px', fontSize: '16px', width: '100%', maxWidth: '300px', borderRadius: '5px', border: '1px solid #ccc' }}
           />
