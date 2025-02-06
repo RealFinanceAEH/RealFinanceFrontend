@@ -196,3 +196,46 @@ export const getFavoriteCurrenciesFromDB = async () => {
     throw error;
   }
 };
+
+// Сохранение фото профиля в IndexedDB
+export const saveProfilePhoto = async (email, photo) => {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction('profile', 'readwrite');
+    const store = transaction.objectStore('profile');
+    const request = store.put({ id: email, photo });
+
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => {
+        console.log('Фото сохранено в IndexedDB для пользователя:', email);
+        resolve();
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Ошибка при сохранении фото профиля:', error);
+    throw error;
+  }
+};
+
+// Получение фото профиля из IndexedDB
+export const getProfilePhoto = async (email) => {
+  try {
+    const db = await initDB();
+    const transaction = db.transaction('profile', 'readonly');
+    const store = transaction.objectStore('profile');
+    const request = store.get(email); // Используем email для поиска фото
+
+    return new Promise((resolve, reject) => {
+      request.onsuccess = () => {
+        console.log('Фото профиля загружено для пользователя:', email);
+        resolve(request.result?.photo); // Возвращаем фото
+      };
+      request.onerror = () => reject(request.error);
+    });
+  } catch (error) {
+    console.error('Ошибка при загрузке фото профиля:', error);
+    throw error;
+  }
+};
+
