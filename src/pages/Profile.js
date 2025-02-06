@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { styles } from '../styles/styles';
-import { getProfile, getWallet, getTransactions, depositFunds } from '../services/api';
-import { 
-  saveProfileData, getProfileData, 
-  saveBalanceData, getBalanceData, 
-  saveTransactionsData, getTransactionsData, 
-  saveProfilePhoto, getProfilePhoto 
+import { getProfile, getWallet, getTransactions, depositFunds, withdrawFunds } from '../services/api';
+import {
+    saveProfileData, getProfileData,
+    saveBalanceData, getBalanceData,
+    saveTransactionsData, getTransactionsData,
+    saveProfilePhoto, getProfilePhoto
 } from '../services/db'; // Добавил работу с IndexedDB
+
 
 const Profile = () => {
   const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -19,68 +20,82 @@ const Profile = () => {
     phone: '',
   });
   const [balance, setBalance] = useState({});
+  /**
+   * @typedef {Object} Transaction
+   * @property {string} amount - Сумма транзакции.
+   * @property {string} currency_code - Код валюты (например, "EUR").
+   * @property {string} final_currency_balance - Баланс после транзакции в исходной валюте.
+   * @property {string} final_pln_balance - Баланс после транзакции в PLN.
+   * @property {number} id - Уникальный идентификатор транзакции.
+   * @property {string} timestamp - Время транзакции в формате UTC.
+   * @property {string} transaction_type - Тип транзакции, например "buy" или "sell".
+   */
+
+  /**
+   * @type {Transaction[]}
+   */
   const [transactions, setTransactions] = useState([]);
   const [depositAmount, setDepositAmount] = useState('');
 
 // В useEffect при загрузке данных
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      let profileData, walletData, transactionsData, storedPhoto;
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                let profileData, walletData, transactionsData, storedPhoto;
 
-      if (navigator.onLine) {
-        // Загружаем онлайн-данные и сохраняем их
-        profileData = await getProfile();
-        setUser({
-          firstName: profileData.firstname,
-          lastName: profileData.lastname,
-          email: profileData.email,
-          phone: profileData.phone,
-        });
-        await saveProfileData(profileData);
+                if (navigator.onLine) {
+                    // Загружаем онлайн-данные и сохраняем их
+                    profileData = await getProfile();
+                    setUser({
+                        firstName: profileData.firstname,
+                        lastName: profileData.lastname,
+                        email: profileData.email,
+                        phone: profileData.phone,
+                    });
+                    await saveProfileData(profileData);
 
-        walletData = await getWallet();
-        setBalance(walletData);
-        await saveBalanceData(walletData);
+                    walletData = await getWallet();
+                    setBalance(walletData);
+                    await saveBalanceData(walletData);
 
-        transactionsData = await getTransactions();
-        setTransactions(transactionsData);
-        await saveTransactionsData(transactionsData);
-      } else {
-        // Загружаем оффлайн-данные из IndexedDB
-        profileData = await getProfileData();
-        if (profileData) {
-          setUser({
-            firstName: profileData.firstname,
-            lastName: profileData.lastname,
-            email: profileData.email,
-            phone: profileData.phone,
-          });
-        }
+                    transactionsData = await getTransactions();
+                    setTransactions(transactionsData);
+                    await saveTransactionsData(transactionsData);
+                } else {
+                    // Загружаем оффлайн-данные из IndexedDB
+                    profileData = await getProfileData();
+                    if (profileData) {
+                        setUser({
+                            firstName: profileData.firstname,
+                            lastName: profileData.lastname,
+                            email: profileData.email,
+                            phone: profileData.phone,
+                        });
+                    }
 
-        walletData = await getBalanceData();
-        if (walletData) {
-          setBalance(walletData);
-        }
+                    walletData = await getBalanceData();
+                    if (walletData) {
+                        setBalance(walletData);
+                    }
 
-        transactionsData = await getTransactionsData();
-        if (transactionsData) {
-          setTransactions(transactionsData);
-        }
-      }
+                    transactionsData = await getTransactionsData();
+                    if (transactionsData) {
+                        setTransactions(transactionsData);
+                    }
+                }
 
-      // 📸 Загружаем сохранённое фото из IndexedDB, используя email
-      storedPhoto = await getProfilePhoto(user.email); // Теперь по email
-      if (storedPhoto) {
-        setProfilePhoto(storedPhoto);
-      }
-    } catch (error) {
-      console.error('Ошибка при загрузке данных:', error);
-    }
-  };
+                // 📸 Загружаем сохранённое фото из IndexedDB, используя email
+                storedPhoto = await getProfilePhoto(user.email); // Теперь по email
+                if (storedPhoto) {
+                    setProfilePhoto(storedPhoto);
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке данных:', error);
+            }
+        };
 
-  fetchData();
-}, [user.email]); // Добавил зависимость от user.email
+        fetchData();
+    }, [user.email]); // Добавил зависимость от user.email
 
 // В компоненте Profile
 const handleUploadPhoto = async () => {
@@ -106,6 +121,26 @@ const handleUploadPhoto = async () => {
   }
 };
 
+    useEffect(() => {
+        // Создаем копию массива
+        const sortedTransactions = [...transactions];
+
+        // Сортируем по timestamp от самых новых к самым старым
+        sortedTransactions.sort((a, b) => {
+            const timestampA = new Date(a.timestamp);
+            const timestampB = new Date(b.timestamp);
+
+            return timestampB - timestampA;  // Сортировка от самых новых
+        });
+
+        // Проверяем, изменился ли порядок, чтобы избежать повторных установок
+        if (JSON.stringify(sortedTransactions) !== JSON.stringify(transactions)) {
+            setTransactions(sortedTransactions);
+        }
+    }, [transactions]);  // Следим за изменениями transactions
+
+
+    // Функция для пополнения баланса
   // 🔹 Функция для пополнения баланса
   const handleDeposit = async () => {
     if (!depositAmount || isNaN(depositAmount) || depositAmount <= 0) {
@@ -122,6 +157,26 @@ const handleUploadPhoto = async () => {
     } catch (error) {
       console.error('Ошибка при пополнении баланса:', error);
       alert('Не удалось пополнить баланс');
+    }
+  };
+
+  const handleWithdraw = async () => {
+    console.log(balance.PLN)
+    console.log(depositAmount);
+    if (!depositAmount || isNaN(depositAmount) || depositAmount <= 0 || parseFloat(depositAmount) > parseFloat(balance.PLN)) {
+      alert('Введите корректную сумму для снятия');
+      return;
+    }
+
+    try {
+      await withdrawFunds(parseFloat(depositAmount));
+      const walletData = await getWallet();
+      setBalance(walletData); // Обновляем весь объект баланса
+      alert('Баланс успешно снят');
+      setDepositAmount('');
+    } catch (error) {
+      console.error('Ошибка при снятии денег со счёта:', error);
+      alert('Не удалось снять деньги со счёта');
     }
   };
 
@@ -158,7 +213,7 @@ const handleUploadPhoto = async () => {
                 {currency}: {balance[currency]}
               </p>
             ))}
-            <div style={{ marginTop: '10px' }}>
+            <div style={{ marginTop: '10px', justifyContent: 'space-between' }}>
               <input
                 type="number"
                 value={depositAmount}
@@ -168,6 +223,9 @@ const handleUploadPhoto = async () => {
               />
               <button onClick={handleDeposit} style={styles.uploadButton}>
                 Пополнить баланс
+              </button>
+              <button onClick={handleWithdraw} style={styles.uploadButton}>
+                Снять баланс
               </button>
             </div>
           </div>
@@ -184,14 +242,28 @@ const handleUploadPhoto = async () => {
           <span>{isHistoryOpen ? '▲' : '▼'}</span>
         </div>
         {isHistoryOpen && (
-          <div style={styles.profileSectionContent}>
-            {transactions.map((transaction) => (
-              <div key={transaction.id} style={{ marginBottom: '10px' }}>
-                <p><strong>{transaction.timestamp}</strong>: {transaction.amount} {transaction.currency_code}</p>
-                <p>{transaction.transaction_type}</p>
-              </div>
-            ))}
-          </div>
+            <div style={styles.profileSectionContent}>
+              {transactions.map((transaction) => (
+                  <div key={transaction.id} style={styles.transactionItem}>
+                    <p><strong>Date: {new Date(transaction.timestamp).toLocaleString()}</strong></p>
+                    <p>
+                      {transaction.transaction_type === "buy" ? "Bought" : "Sold"}:
+                      {parseFloat(transaction.amount).toString()} {transaction.currency_code}
+                    </p>
+                    <p>
+                      Final currency balance: {parseFloat(transaction.final_currency_balance).toString()} {transaction.currency_code}
+                    </p>
+                    <p>
+                      Final PLN balance: {parseFloat(transaction.final_pln_balance).toString()} PLN
+                    </p>
+                    {transaction.price && (
+                        <p>
+                          Price: {parseFloat(transaction.price).toString()} {transaction.currency_code} per unit
+                        </p>
+                    )}
+                  </div>
+              ))}
+            </div>
         )}
       </div>
     </div>

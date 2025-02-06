@@ -147,11 +147,32 @@ export const styles = {
     flexDirection: 'column',
   },
 
+  searchContainer: {
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',  // Это выравнивает по горизонтали
+      alignItems: 'center',      // Это выравнивает по вертикали
+  },
+
+  searchInput: {
+      width: '60%',
+      height: '25px',
+      minWidth: "200px",
+      alignItems: 'center',
+      justifyContent: 'center',
+      textAlign: 'center',
+      borderRadius: '10px',
+      boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
+  },
+
   topSection: {
     flex: 1,
     backgroundColor: '#007BFF',
     padding: '20px',
+    marginTop: "20px",
     color: 'black',
+    borderTopLeftRadius: '25px',
+    borderTopRightRadius: '25px',
   },
 
   bottomSection: {
@@ -216,10 +237,12 @@ formContainer: {
   // Стили для страницы профиля
   profileContainer: {
     display: 'flex',
+    minHeight: "70vw",
     flexDirection: 'column',
     alignItems: 'center',
     padding: '20px',
-  },
+    backgroundColor: "#F2F2F2",
+},
 
   profilePhoto: {
     width: '100px',
@@ -269,6 +292,10 @@ formContainer: {
     marginTop: '10px',
   },
 
+  transactionItem: {
+    borderBottom: "2px solid black",
+  },
+
   uploadButton: {
     backgroundColor: '#007BFF',
     color: 'white',
@@ -277,6 +304,7 @@ formContainer: {
     padding: '10px 20px',
     cursor: 'pointer',
     fontSize: '16px',
+    marginLeft: '10px',
     marginTop: '10px',
   },
 
@@ -341,9 +369,10 @@ formContainer: {
   // Стили для контейнера с кнопками покупки и продажи
   actionButtonsContainer: {
     display: 'flex',
-    gap: '10px',
+    gap: '50px',
     marginTop: '20px',
     justifyContent: 'center',
+
   },
 
   // Стили для заголовков

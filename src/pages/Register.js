@@ -34,15 +34,19 @@ const Register = () => {
 
     try {
       // Убираем confirmPassword, так как бэкенд его не ожидает
-      const { confirmPassword, ...dataToSend } = formData;
+      const {confirmPassword, ...dataToSend} = formData;
       const response = await registerUser(dataToSend);
       console.log('Регистрация успешна:', response);
       navigate('/login');
     } catch (error) {
+        if (error?.response?.status === 409) {
+          setError("Имейл занят");
+          return
+        }
       setError('Ошибка при регистрации');
       console.error('Ошибка:', error);
     }
-  };
+  }
 
   return (
     <div style={styles.formContainer}>
@@ -71,7 +75,7 @@ const Register = () => {
           type="email"
           name="email"
           placeholder="Адрес почты"
-          value={formData.email}
+          value={formData.email.toLowerCase()}
           onChange={handleChange}
           style={styles.formInput}
           required

@@ -31,7 +31,11 @@ const Login = () => {
       // Перенаправляем на главную страницу
       navigate('/');
     } catch (error) {
-      setError('Ошибка при входе: неверный email или пароль');
+      if (error?.response?.status === 401) {
+        setError('Ошибка при входе: неверный email или пароль');
+        return;
+      }
+      setError('Непредвиденная ошибка');
       console.error('Ошибка:', error);
     }
   };
@@ -49,7 +53,7 @@ const Login = () => {
           type="email"
           name="email"
           placeholder="Адрес почты"
-          value={formData.email}
+          value={formData.email.toLowerCase()}
           onChange={handleChange}
           style={styles.formInput}
           required
