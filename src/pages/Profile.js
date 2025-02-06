@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { styles } from '../styles/styles';
 import { getProfile, getWallet, getTransactions, depositFunds } from '../services/api';
-import { saveProfileData, getProfileData, saveBalanceData, getBalanceData, saveTransactionsData, getTransactionsData } from '../services/db';
+import { 
+  saveProfileData, getProfileData, 
+  saveBalanceData, getBalanceData, 
+  saveTransactionsData, getTransactionsData, 
+  saveProfilePhoto, getProfilePhoto 
+} from '../services/db'; // Добавил работу с IndexedDB
 
 const Profile = () => {
   const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -17,86 +22,91 @@ const Profile = () => {
   const [transactions, setTransactions] = useState([]);
   const [depositAmount, setDepositAmount] = useState('');
 
-  // Загрузка данных профиля, баланса и транзакций
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let profileData, walletData, transactionsData;
+// В useEffect при загрузке данных
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      let profileData, walletData, transactionsData, storedPhoto;
 
-        if (navigator.onLine) {
-          // Получаем данные профиля
-          profileData = await getProfile();
+      if (navigator.onLine) {
+        // Загружаем онлайн-данные и сохраняем их
+        profileData = await getProfile();
+        setUser({
+          firstName: profileData.firstname,
+          lastName: profileData.lastname,
+          email: profileData.email,
+          phone: profileData.phone,
+        });
+        await saveProfileData(profileData);
+
+        walletData = await getWallet();
+        setBalance(walletData);
+        await saveBalanceData(walletData);
+
+        transactionsData = await getTransactions();
+        setTransactions(transactionsData);
+        await saveTransactionsData(transactionsData);
+      } else {
+        // Загружаем оффлайн-данные из IndexedDB
+        profileData = await getProfileData();
+        if (profileData) {
           setUser({
             firstName: profileData.firstname,
             lastName: profileData.lastname,
             email: profileData.email,
             phone: profileData.phone,
           });
-          await saveProfileData(profileData); // Сохраняем данные профиля
+        }
 
-          // Получаем баланс
-          walletData = await getWallet();
+        walletData = await getBalanceData();
+        if (walletData) {
           setBalance(walletData);
-          await saveBalanceData(walletData); // Сохраняем данные баланса
+        }
 
-          // Получаем историю транзакций
-          transactionsData = await getTransactions();
+        transactionsData = await getTransactionsData();
+        if (transactionsData) {
           setTransactions(transactionsData);
-          await saveTransactionsData(transactionsData); // Сохраняем данные транзакций
-        } else {
-          // Загружаем данные из кэша
-          profileData = await getProfileData();
-          if (profileData) {
-            setUser({
-              firstName: profileData.firstname,
-              lastName: profileData.lastname,
-              email: profileData.email,
-              phone: profileData.phone,
-            });
-          }
-
-          walletData = await getBalanceData();
-          if (walletData) {
-            setBalance(walletData);
-          }
-
-          transactionsData = await getTransactionsData();
-          if (transactionsData) {
-            setTransactions(transactionsData);
-          }
         }
-      } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
       }
-    };
 
-    fetchData();
-  }, []);
-
-  // Функция для загрузки фото
-  const handleUploadPhoto = async () => {
-    try {
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.capture = 'camera'; // Для мобильных устройств
-      fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            setProfilePhoto(event.target.result);
-          };
-          reader.readAsDataURL(file);
-        }
-      };
-      fileInput.click();
+      // 📸 Загружаем сохранённое фото из IndexedDB, используя email
+      storedPhoto = await getProfilePhoto(user.email); // Теперь по email
+      if (storedPhoto) {
+        setProfilePhoto(storedPhoto);
+      }
     } catch (error) {
-      console.error('Ошибка при загрузке фото:', error);
+      console.error('Ошибка при загрузке данных:', error);
     }
   };
 
-  // Функция для пополнения баланса
+  fetchData();
+}, [user.email]); // Добавил зависимость от user.email
+
+// В компоненте Profile
+const handleUploadPhoto = async () => {
+  try {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file && user.email) { // Используем user.email
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const newPhoto = event.target.result;
+          setProfilePhoto(newPhoto);
+          await saveProfilePhoto(user.email, newPhoto); // Сохраняем фото с привязкой к email
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    fileInput.click();
+  } catch (error) {
+    console.error('Ошибка при загрузке фото:', error);
+  }
+};
+
+  // 🔹 Функция для пополнения баланса
   const handleDeposit = async () => {
     if (!depositAmount || isNaN(depositAmount) || depositAmount <= 0) {
       alert('Введите корректную сумму для пополнения');
