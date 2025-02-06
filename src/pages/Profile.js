@@ -84,7 +84,6 @@ const Profile = () => {
                     }
                 }
 
-                // 📸 Load saved photo from IndexedDB using email
                 storedPhoto = await getProfilePhoto(user.email); // Now using email
                 if (storedPhoto) {
                     setProfilePhoto(storedPhoto);
@@ -95,9 +94,8 @@ const Profile = () => {
         };
 
         fetchData();
-    }, [user.email]); // Added dependency on user.email
+    }, [user.email]);
 
-// In Profile component
     const handleUploadPhoto = async () => {
         try {
             const fileInput = document.createElement('input');
@@ -130,18 +128,14 @@ const Profile = () => {
             const timestampA = new Date(a.timestamp);
             const timestampB = new Date(b.timestamp);
 
-            return timestampB - timestampA;  // Sort from newest
+            return timestampB - timestampA;
         });
 
-        // Check if the order has changed to avoid redundant updates
         if (JSON.stringify(sortedTransactions) !== JSON.stringify(transactions)) {
             setTransactions(sortedTransactions);
         }
     }, [transactions]);  // Watching for changes in transactions
 
-
-    // Function for deposit
-    // 🔹 Function for deposit
     const handleDeposit = async () => {
         if (!depositAmount || isNaN(depositAmount) || depositAmount <= 0) {
             alert('Enter a valid amount for deposit');
@@ -151,7 +145,7 @@ const Profile = () => {
         try {
             await depositFunds(parseFloat(depositAmount));
             const walletData = await getWallet();
-            setBalance(walletData); // Update the balance object
+            setBalance(walletData);
             alert('Balance successfully deposited');
             setDepositAmount('');
         } catch (error) {
