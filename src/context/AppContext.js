@@ -35,7 +35,6 @@ export const AppProvider = ({ children }) => {
       const transactionsData = await getTransactionsData();
       if (transactionsData) setTransactions(transactionsData);
 
-      // Load favorite currencies from IndexedDB
       const favorites = await getFavoriteCurrenciesFromDB();
       setFavoriteCurrencies(favorites);
     };
@@ -56,7 +55,6 @@ export const AppProvider = ({ children }) => {
     if (transactions) saveTransactionsData(transactions);
   }, [transactions]);
 
-  // Save favorite currencies when changes occur
   useEffect(() => {
     if (favoriteCurrencies.length > 0) {
       saveFavoriteCurrencies(favoriteCurrencies);
