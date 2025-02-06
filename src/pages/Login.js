@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { styles } from '../styles/styles';
 import { loginUser } from '../services/api';
-import { Eye, EyeOff } from "lucide-react"; // Иконки для отображения/скрытия пароля
+import { Eye, EyeOff } from "lucide-react"; // Icons for showing/hiding password
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -23,20 +23,20 @@ const Login = () => {
 
     try {
       const response = await loginUser(formData);
-      console.log('Логин успешен:', response);
+      console.log('Login successful:', response);
 
-      // Сохраняем токен в localStorage
+      // Save token in localStorage
       localStorage.setItem('token', response.access_token);
 
-      // Перенаправляем на главную страницу
+      // Redirect to the homepage
       navigate('/');
     } catch (error) {
       if (error?.response?.status === 401) {
-        setError('Ошибка при входе: неверный email или пароль');
+        setError('Login failed: incorrect email or password');
         return;
       }
-      setError('Непредвиденная ошибка');
-      console.error('Ошибка:', error);
+      setError('Unexpected error');
+      console.error('Error:', error);
     }
   };
 
@@ -45,49 +45,49 @@ const Login = () => {
   }
 
   return (
-    <div style={styles.formContainer}>
-      <h2 style={styles.formTitle}>Вход</h2>
-      {error && <p style={styles.formError}>{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Адрес почты"
-          value={formData.email.toLowerCase()}
-          onChange={handleChange}
-          style={styles.formInput}
-          required
-        />
-        <div style={styles.inputWrapper}>
+      <div style={styles.formContainer}>
+        <h2 style={styles.formTitle}>Login</h2>
+        {error && <p style={styles.formError}>{error}</p>}
+        <form onSubmit={handleSubmit}>
           <input
-            type={showPassword ? "text" : "password"}
-            name="password"
-            placeholder="Пароль"
-            value={formData.password}
-            onChange={handleChange}
-            style={styles.formInput}
-            required
+              type="email"
+              name="email"
+              placeholder="Email address"
+              value={formData.email.toLowerCase()}
+              onChange={handleChange}
+              style={styles.formInput}
+              required
           />
-          <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={styles.toggleButton}
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          <div style={styles.inputWrapper}>
+            <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                value={formData.password}
+                onChange={handleChange}
+                style={styles.formInput}
+                required
+            />
+            <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={styles.toggleButton}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+          <button type="submit" style={styles.formButton}>
+            Login
           </button>
+        </form>
+        <div style={styles.centeredButtonContainer}>
+          <Link to="/register" style={styles.centeredButton}>
+            <button>
+              Register
+            </button>
+          </Link>
         </div>
-        <button type="submit" style={styles.formButton}>
-          Войти
-        </button>
-      </form>
-      <div style={styles.centeredButtonContainer}>
-        <Link to="/register" style={styles.centeredButton}>
-          <button>
-              Регистрация
-          </button>
-        </Link>
       </div>
-    </div>
   );
 };
 

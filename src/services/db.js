@@ -1,11 +1,12 @@
-// Инициализация базы данных
+// Initialize the database
 const initDB = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open('CurrencyDB', 2); // Увеличиваем версию базы данных
+    const request = indexedDB.open('CurrencyDB', 2); // Increment the database version
 
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
 
+      // Create object stores if they do not exist
       if (!db.objectStoreNames.contains('profile')) {
         db.createObjectStore('profile', { keyPath: 'id' });
       }
@@ -37,7 +38,11 @@ const initDB = () => {
   });
 };
 
-// Сохранение данных профиля
+/**
+ * Saves profile data to the IndexedDB.
+ * @param {Object} profileData - The profile data to save.
+ * @returns {Promise} - A promise that resolves when the data is saved.
+ */
 export const saveProfileData = async (profileData) => {
   const db = await initDB();
   const transaction = db.transaction('profile', 'readwrite');
@@ -50,7 +55,10 @@ export const saveProfileData = async (profileData) => {
   });
 };
 
-// Получение данных профиля
+/**
+ * Retrieves profile data from the IndexedDB.
+ * @returns {Promise} - A promise that resolves with the profile data.
+ */
 export const getProfileData = async () => {
   const db = await initDB();
   const transaction = db.transaction('profile', 'readonly');
@@ -63,7 +71,11 @@ export const getProfileData = async () => {
   });
 };
 
-// Сохранение баланса
+/**
+ * Saves balance data to the IndexedDB.
+ * @param {Object} balanceData - The balance data to save.
+ * @returns {Promise} - A promise that resolves when the data is saved.
+ */
 export const saveBalanceData = async (balanceData) => {
   const db = await initDB();
   const transaction = db.transaction('balance', 'readwrite');
@@ -76,7 +88,10 @@ export const saveBalanceData = async (balanceData) => {
   });
 };
 
-// Получение баланса
+/**
+ * Retrieves balance data from the IndexedDB.
+ * @returns {Promise} - A promise that resolves with the balance data.
+ */
 export const getBalanceData = async () => {
   const db = await initDB();
   const transaction = db.transaction('balance', 'readonly');
@@ -89,7 +104,11 @@ export const getBalanceData = async () => {
   });
 };
 
-// Сохранение истории транзакций
+/**
+ * Saves transaction history data to the IndexedDB.
+ * @param {Array} transactionsData - The transaction history data to save.
+ * @returns {Promise} - A promise that resolves when the data is saved.
+ */
 export const saveTransactionsData = async (transactionsData) => {
   const db = await initDB();
   const transaction = db.transaction('transactions', 'readwrite');
@@ -102,7 +121,10 @@ export const saveTransactionsData = async (transactionsData) => {
   });
 };
 
-// Получение истории транзакций
+/**
+ * Retrieves transaction history data from the IndexedDB.
+ * @returns {Promise} - A promise that resolves with the transaction history data.
+ */
 export const getTransactionsData = async () => {
   const db = await initDB();
   const transaction = db.transaction('transactions', 'readonly');
@@ -115,6 +137,11 @@ export const getTransactionsData = async () => {
   });
 };
 
+/**
+ * Saves currency data to the IndexedDB.
+ * @param {Object} currencyData - The currency data to save.
+ * @returns {Promise} - A promise that resolves when the data is saved.
+ */
 export const saveCurrencyData = async (currencyData) => {
   try {
     const db = await initDB();
@@ -124,17 +151,22 @@ export const saveCurrencyData = async (currencyData) => {
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        console.log('Данные валюты сохранены в IndexedDB:', currencyData);
+        console.log('Currency data saved to IndexedDB:', currencyData);
         resolve();
       };
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('Ошибка при сохранении данных валюты:', error);
+    console.error('Error saving currency data:', error);
     throw error;
   }
 };
 
+/**
+ * Retrieves currency data from the IndexedDB.
+ * @param {string} code - The currency code to retrieve.
+ * @returns {Promise} - A promise that resolves with the currency data.
+ */
 export const getCurrencyData = async (code) => {
   try {
     const db = await initDB();
@@ -144,18 +176,22 @@ export const getCurrencyData = async (code) => {
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        console.log('Данные валюты загружены из IndexedDB:', request.result);
+        console.log('Currency data loaded from IndexedDB:', request.result);
         resolve(request.result);
       };
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('Ошибка при загрузке данных валюты:', error);
+    console.error('Error loading currency data:', error);
     throw error;
   }
 };
 
-// Сохранение избранных валют
+/**
+ * Saves favorite currencies to the IndexedDB.
+ * @param {Array} favoriteCurrencies - The list of favorite currencies to save.
+ * @returns {Promise} - A promise that resolves when the data is saved.
+ */
 export const saveFavoriteCurrencies = async (favoriteCurrencies) => {
   try {
     const db = await initDB();
@@ -165,18 +201,21 @@ export const saveFavoriteCurrencies = async (favoriteCurrencies) => {
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        console.log('Избранные валюты сохранены в IndexedDB:', favoriteCurrencies);
+        console.log('Favorite currencies saved to IndexedDB:', favoriteCurrencies);
         resolve();
       };
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('Ошибка при сохранении избранных валют:', error);
+    console.error('Error saving favorite currencies:', error);
     throw error;
   }
 };
 
-// Загрузка избранных валют
+/**
+ * Retrieves favorite currencies from the IndexedDB.
+ * @returns {Promise} - A promise that resolves with the list of favorite currencies.
+ */
 export const getFavoriteCurrenciesFromDB = async () => {
   try {
     const db = await initDB();
@@ -186,18 +225,23 @@ export const getFavoriteCurrenciesFromDB = async () => {
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        console.log('Избранные валюты загружены из IndexedDB:', request.result?.currencies || []);
+        console.log('Favorite currencies loaded from IndexedDB:', request.result?.currencies || []);
         resolve(request.result?.currencies || []);
       };
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('Ошибка при загрузке избранных валют:', error);
+    console.error('Error loading favorite currencies:', error);
     throw error;
   }
 };
 
-// Сохранение фото профиля в IndexedDB
+/**
+ * Saves a profile photo to the IndexedDB.
+ * @param {string} email - The email associated with the profile photo.
+ * @param {string} photo - The profile photo to save.
+ * @returns {Promise} - A promise that resolves when the photo is saved.
+ */
 export const saveProfilePhoto = async (email, photo) => {
   try {
     const db = await initDB();
@@ -207,35 +251,38 @@ export const saveProfilePhoto = async (email, photo) => {
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        console.log('Фото сохранено в IndexedDB для пользователя:', email);
+        console.log('Profile photo saved to IndexedDB for user:', email);
         resolve();
       };
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('Ошибка при сохранении фото профиля:', error);
+    console.error('Error saving profile photo:', error);
     throw error;
   }
 };
 
-// Получение фото профиля из IndexedDB
+/**
+ * Retrieves a profile photo from the IndexedDB.
+ * @param {string} email - The email associated with the profile photo.
+ * @returns {Promise} - A promise that resolves with the profile photo.
+ */
 export const getProfilePhoto = async (email) => {
   try {
     const db = await initDB();
     const transaction = db.transaction('profile', 'readonly');
     const store = transaction.objectStore('profile');
-    const request = store.get(email); // Используем email для поиска фото
+    const request = store.get(email);
 
     return new Promise((resolve, reject) => {
       request.onsuccess = () => {
-        console.log('Фото профиля загружено для пользователя:', email);
-        resolve(request.result?.photo); // Возвращаем фото
+        console.log('Profile photo loaded for user:', email);
+        resolve(request.result?.photo);
       };
       request.onerror = () => reject(request.error);
     });
   } catch (error) {
-    console.error('Ошибка при загрузке фото профиля:', error);
+    console.error('Error loading profile photo:', error);
     throw error;
   }
 };
-
