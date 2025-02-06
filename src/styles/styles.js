@@ -1,5 +1,4 @@
 export const styles = {
-    // Стили для кнопки открытия бокового меню
     menuButton: {
       position: 'fixed',
       top: '60px',
@@ -11,16 +10,14 @@ export const styles = {
       cursor: 'pointer',
       zIndex: 1001,
     },
-  
-    // Стили для иконки кнопки меню
+
     menuIcon: {
       width: '20px',
       height: '2px',
       backgroundColor: 'white',
       margin: '4px 0',
     },
-  
-    // Стили для затемнения страницы
+
     overlay: {
       position: 'fixed',
       top: 0,
@@ -30,8 +27,7 @@ export const styles = {
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       zIndex: 1002,
     },
-  
-    // Стили для бокового меню
+
     sideMenu: {
       position: 'fixed',
       top: 0,
@@ -43,16 +39,13 @@ export const styles = {
       zIndex: 1003,
       transition: 'left 0.3s',
     },
-  
-    // Стили для основного контента
+
     mainContent: {
       flex: 1,
-      padding: '20px',
       width: '100%',
       transition: 'margin-left 0.3s',
     },
-  
-    // Стили для верхней части бокового меню (фото и данные пользователя)
+
     userInfo: {
       display: 'flex',
       alignItems: 'center',
@@ -75,8 +68,7 @@ export const styles = {
       color: '#666',
       fontSize: '14px',
     },
-  
-    // Стили для списка ссылок в боковом меню
+
     menuList: {
       listStyle: 'none',
       padding: 0,
@@ -92,8 +84,7 @@ export const styles = {
       textDecoration: 'none',
       color: 'black',
     },
-  
-    // Стили для кнопки выхода
+
     logoutButton: {
       backgroundColor: '#f44336',
       color: 'white',
@@ -101,10 +92,9 @@ export const styles = {
       borderRadius: '5px',
       border: 'none',
       cursor: 'pointer',
-      marginTop: 'auto', // Поднимаем кнопку вверх
+      marginTop: 'auto',
     },
-  
-    // Стили для карточек валют
+
     currencyCard: {
       display: 'flex',
       alignItems: 'center',
@@ -140,18 +130,19 @@ export const styles = {
       color: 'red',
     },
 
-      // Стили для главной страницы
   homeContainer: {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
+    marginTop: "30px",
+    padding: "20px"
   },
 
   searchContainer: {
       width: '100%',
       display: 'flex',
-      justifyContent: 'center',  // Это выравнивает по горизонтали
-      alignItems: 'center',      // Это выравнивает по вертикали
+      justifyContent: 'center',
+      alignItems: 'center',
   },
 
   searchInput: {
@@ -189,7 +180,6 @@ export const styles = {
     marginTop: '10px',
   },
 
-// Стили для формы
 formContainer: {
     maxWidth: '400px',
     margin: '0 auto',
@@ -234,13 +224,12 @@ formContainer: {
     textAlign: 'center',
   },
 
-  // Стили для страницы профиля
   profileContainer: {
     display: 'flex',
     minHeight: "70vw",
     flexDirection: 'column',
     alignItems: 'center',
-    padding: '20px',
+    padding: '40px',
     backgroundColor: "#F2F2F2",
 },
 
@@ -311,7 +300,7 @@ formContainer: {
   uploadButtonHover: {
     backgroundColor: '#0056b3',
   },
-  // Стили для кнопок изменения периода графика
+
   periodButton: {
     padding: '10px 20px',
     fontSize: '16px',
@@ -328,7 +317,6 @@ formContainer: {
     backgroundColor: '#0056b3',
   },
 
-  // Стили для кнопок покупки и продажи
   buyButton: {
     padding: '10px 20px',
     fontSize: '16px',
@@ -359,14 +347,12 @@ formContainer: {
     backgroundColor: '#d32f2f',
   },
 
-  // Стили для контейнера с кнопками периода
   periodButtonsContainer: {
     display: 'flex',
     justifyContent: 'center',
     margin: '20px 0',
   },
 
-  // Стили для контейнера с кнопками покупки и продажи
   actionButtonsContainer: {
     display: 'flex',
     gap: '50px',
@@ -375,29 +361,26 @@ formContainer: {
 
   },
 
-  // Стили для заголовков
   title: {
     fontFamily: 'Roboto, sans-serif',
     fontSize: '24px',
     color: '#333',
-    marginBottom: '10px',
   },
 
   subtitle: {
     fontFamily: 'Roboto, sans-serif',
     fontSize: '18px',
     color: '#555',
-    marginBottom: '20px',
   },
 
   centeredButtonContainer: {
     display: "flex",
-    justifyContent: "center", // Центрируем кнопку внутри контейнера
+    justifyContent: "center",
     marginTop: "20px",
   },
 
   centeredButton: {
-    display: "block", // Убираем flex, чтобы кнопка не растягивалась
+    display: "block",
     textAlign: "center",
   },
 

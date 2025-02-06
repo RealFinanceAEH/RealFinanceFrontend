@@ -8,7 +8,8 @@ import Profile from './pages/Profile';
 import SideMenu from './components/SideMenu';
 import StatusBar from './components/StatusBar';
 import { styles } from './styles/styles';
-import ProtectedRoute from './components/ProtectedRoute'; // Импортируем ProtectedRoute
+import ProtectedRoute from './components/ProtectedRoute';
+import NotFound from "./pages/NotFound"; // Импортируем ProtectedRoute
 
 const AppContent = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -25,7 +26,7 @@ const AppContent = () => {
   return (
     <>
       <StatusBar />
-      <div style={{ display: 'flex', marginTop: '50px' }}>
+      <div style={{ display: 'flex'}}>
         {!hideMenuButtonPaths.includes(location.pathname) && (
           <button onClick={() => setIsMenuOpen(!isMenuOpen)} style={styles.menuButton}>
             <div style={styles.menuIcon} />
@@ -50,6 +51,7 @@ const AppContent = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/currency/:currencyCode" element={<ProtectedRoute><CurrencyDetail /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
       </div>

@@ -8,6 +8,7 @@ import { getCurrencyData, saveCurrencyData, saveFavoriteCurrencies, getFavoriteC
 
 const Home = () => {
   const { currencies, setCurrencies, isOnline } = useContext(AppContext);
+  const [isLocalOnline, setIsLocalOnline] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteCurrencies, setFavoriteCurrencies] = useState([]);
   const [searchInput, setSearchInput] = useState('');
@@ -128,6 +129,16 @@ const Home = () => {
       isMounted = false; // Очистка при размонтировании компонента
     };
   }, [isOnline]); // Зависимость только от isOnline
+
+  useEffect(() => {
+    Notification.requestPermission().then(permission => {
+    if (permission === 'granted') {
+      // Уведомление через 1 минуту
+        new Notification('Привет!', {
+          body: 'Вы успешно вошли в систему!',
+        });
+    }
+  })}, [])
 
   if (isLoading) {
     return <div>Загрузка...</div>;

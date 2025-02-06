@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { AppContext } from '../context/AppContext';
 import Chart from '../components/Chart';
@@ -6,15 +6,15 @@ import { getCurrencyRate, getCurrencyHistory, buyCurrency, sellCurrency } from '
 import { saveCurrencyData, getCurrencyData } from '../services/db';
 import { styles } from '../styles/styles';
 
-// rate - это ask
+// rate is the ask price
 const CurrencyDetail = () => {
   const { currencyCode } = useParams();
   const { isOnline, setBalances } = useContext(AppContext);
   const [currencyData, setCurrencyData] = useState(null);
   const [amount, setAmount] = useState(0);
-  const [period, setPeriod] = useState('7d'); // По умолчанию 7 дней
+  const [period, setPeriod] = useState('7d'); // Default period is 7 days
 
-  // Фильтрация истории курсов по периоду
+  // Filter history data by selected period
   const filterHistoryByPeriod = (history, period) => {
     const now = new Date();
     let startDate;
@@ -39,36 +39,41 @@ const CurrencyDetail = () => {
     return history.filter((item) => new Date(item.effective_date) >= startDate);
   };
 
-  // Загрузка данных
+  const isFetching = useRef(false);
+
+  // Fetch currency data from API or cache if offline
   useEffect(() => {
+    if (isFetching.current) return;
+
+    isFetching.current = true;
     const fetchCurrencyData = async () => {
       try {
         const rateData = await getCurrencyRate(currencyCode);
-        console.log('Данные курса валюты:', rateData);
+        console.log('Currency rate data:', rateData);
 
-        // Проверяем, что rateData содержит корректные данные
+        // Ensure that rateData contains valid data
         if (!rateData || !rateData.ask || isNaN(rateData.ask)) {
-          throw new Error('Курс валюты не загружен или некорректен.');
+          throw new Error('Currency rate data is missing or invalid.');
         }
 
-        const rate = rateData.ask; // Используем цену покупки (ask)
+        const rate = rateData.ask; // Use the ask price
 
-        // Загружаем историю курсов за год
+        // Load currency history for the last year
         const history = await getCurrencyHistory(currencyCode);
 
         const data = {
           code: currencyCode,
           name: currencyCode.toUpperCase(),
           rate,
-          history, // Сохраняем историю курсов
+          history, // Save the currency history
         };
 
         setCurrencyData(data);
-        await saveCurrencyData(data); // Сохраняем данные в IndexedDB
+        await saveCurrencyData(data); // Save data to IndexedDB
       } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
+        console.error('Error loading data:', error);
 
-        // Если нет интернета, загружаем данные из кэша
+        // If offline, load data from cache
         if (!isOnline) {
           const cachedData = await getCurrencyData(currencyCode);
           if (cachedData) {
@@ -79,169 +84,174 @@ const CurrencyDetail = () => {
     };
 
     if (isOnline) {
-      fetchCurrencyData();
+      fetchCurrencyData().finally(() => isFetching.current = false);
     } else {
-      // Загружаем данные из кэша, если нет интернета
+      // Load cached data if offline
       const loadCachedData = async () => {
         const cachedData = await getCurrencyData(currencyCode);
         if (cachedData) {
           setCurrencyData(cachedData);
         }
       };
-      loadCachedData();
+      loadCachedData().finally(() => isFetching.current = false);
     }
   }, [currencyCode, isOnline]);
 
-  // Обработчик изменения периода
+  // Handle period change
   const handlePeriodChange = (newPeriod) => {
     setPeriod(newPeriod);
   };
 
-  // Фильтрация истории курсов для графика
+  // Filter currency history for the chart
   const filteredHistory = currencyData
-    ? filterHistoryByPeriod(currencyData.history, period)
-    : [];
+      ? filterHistoryByPeriod(currencyData.history, period)
+      : [];
 
   const handleBuy = async () => {
     if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
-      alert('Ошибка: Курс валюты не загружен или некорректен.');
+      alert('Error: Currency rate is missing or invalid.');
       return;
     }
 
     if (isNaN(amount) || amount <= 0) {
-      alert('Ошибка: Введите корректное количество валюты.');
+      alert('Error: Please enter a valid amount of currency.');
       return;
     }
 
     try {
       const response = await buyCurrency(currencyCode, amount);
-      console.log('Ответ от сервера (покупка):', response);
+      console.log('Server response (buy):', response);
 
-      // Обновляем локальное состояние на основе ответа сервера
+      // Update local state based on server response
       setBalances((prevBalances) => ({
         ...prevBalances,
         PLN: parseFloat(response.final_pln_balance),
         [currencyCode]: parseFloat(response.final_currency_balance),
       }));
 
-      alert(`Куплено ${amount} ${currencyData.code} за ${(amount * currencyData.rate).toFixed(2)} PLN`);
+      alert(`Bought ${amount} ${currencyData.code} for ${(amount * currencyData.rate).toFixed(2)} PLN`);
     } catch (error) {
-      console.error('Ошибка при покупке валюты:', error);
-      alert('Ошибка при покупке валюты. Проверьте баланс и попробуйте снова.');
+      console.error('Error while buying currency:', error);
+      alert('Error while buying currency. Please check your balance and try again.');
     }
   };
 
   const handleSell = async () => {
     if (!currencyData || !currencyData.rate || isNaN(currencyData.rate)) {
-      alert('Ошибка: Курс валюты не загружен или некорректен.');
+      alert('Error: Currency rate is missing or invalid.');
       return;
     }
 
     if (isNaN(amount) || amount <= 0) {
-      alert('Ошибка: Введите корректное количество валюты.');
+      alert('Error: Please enter a valid amount of currency.');
       return;
     }
 
     try {
       const response = await sellCurrency(currencyCode, amount);
-      console.log('Ответ от сервера (продажа):', response);
+      console.log('Server response (sell):', response);
 
-      // Обновляем локальное состояние на основе ответа сервера
+      // Update local state based on server response
       setBalances((prevBalances) => ({
         ...prevBalances,
         PLN: parseFloat(response.final_pln_balance),
         [currencyCode]: parseFloat(response.final_currency_balance),
       }));
 
-      alert(`Продано ${amount} ${currencyData.code} за ${(amount * currencyData.rate).toFixed(2)} PLN`);
+      alert(`Sold ${amount} ${currencyData.code} for ${(amount * currencyData.rate).toFixed(2)} PLN`);
     } catch (error) {
-      console.error('Ошибка при продаже валюты:', error);
-      alert('Ошибка при продаже валюты. Проверьте баланс и попробуйте снова.');
+      console.error('Error while selling currency:', error);
+      alert('Error while selling currency. Please check your balance and try again.');
     }
   };
 
   if (!currencyData) {
-    return <div>Загрузка...</div>;
+    return <div>Loading...</div>;
   }
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'Roboto, sans-serif' }}>
-      <h1 style={styles.title}>{currencyData.name} ({currencyData.code})</h1>
-      <p style={styles.subtitle}>Цена продажи: {currencyData.rate} PLN</p>
-      {console.log("КАРЕНСИ ДАТА")}
-      {console.log(currencyData)}
-      <p style={styles.subtitle}>Цена покупки: {currencyData.history.at(-1).bid} PLN</p>
+      <div style={{ paddingLeft: '20px', paddingRight: '20px', fontFamily: 'Roboto, sans-serif' }}>
+        <div style={{ display: "flex", justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+          <div>
+            <h1 style={styles.title}>{currencyData.name} ({currencyData.code})</h1>
+            <p style={styles.subtitle}>Selling Price: {currencyData.rate} PLN</p>
+            <p style={styles.subtitle}>Buying Price: {currencyData.history.at(-1).bid} PLN</p>
 
-      <h2 style={styles.subtitle}>График изменения курса</h2>
-      <div style={styles.periodButtonsContainer}>
-        <button
-          style={period === '7d' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => handlePeriodChange('7d')}
-        >
-          7 дней
-        </button>
-        <button
-          style={period === '1m' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => handlePeriodChange('1m')}
-        >
-          1 месяц
-        </button>
-        <button
-          style={period === '3m' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => handlePeriodChange('3m')}
-        >
-          3 месяца
-        </button>
-        <button
-          style={period === '1y' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
-          onClick={() => handlePeriodChange('1y')}
-        >
-          1 год
-        </button>
-      </div>
-
-      {/* Отображение графика */}
-      <Chart data={filteredHistory} />
-
-      <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(parseFloat(e.target.value))}
-          placeholder="Введите количество"
-          style={{ padding: '10px', fontSize: '16px', width: '100%', maxWidth: '300px', borderRadius: '5px', border: '1px solid #ccc' }}
-        />
-      </div>
-
-      <div style={styles.actionButtonsContainer}>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-          <button
-            style={styles.buyButton}
-            onClick={handleBuy}
-          >
-            Купить
-          </button>
-          {!isNaN(amount) && !(amount === 0) && (
-          <span>
-            Всего: {(amount * currencyData.history.at(-1).bid).toFixed(4).toString()}
-          </span>
-              )}
+            <h2 style={styles.subtitle}>Price Change Chart</h2>
+          </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+
+        <div style={styles.periodButtonsContainer}>
           <button
-            style={styles.sellButton}
-            onClick={handleSell}
+              style={period === '7d' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
+              onClick={() => handlePeriodChange('7d')}
           >
-            Продать
+            7 days
           </button>
-          {!isNaN(amount) && !(amount === 0) && (
-              <span>
-                Всего: {(amount * currencyData.rate).toFixed(4).toString()}
-              </span>
-          )}
+          <button
+              style={period === '1m' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
+              onClick={() => handlePeriodChange('1m')}
+          >
+            1 month
+          </button>
+          <button
+              style={period === '3m' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
+              onClick={() => handlePeriodChange('3m')}
+          >
+            3 months
+          </button>
+          <button
+              style={period === '1y' ? { ...styles.periodButton, ...styles.periodButtonActive } : styles.periodButton}
+              onClick={() => handlePeriodChange('1y')}
+          >
+            1 year
+          </button>
+        </div>
+
+        {/* Display the chart */}
+        <div style={{ maxHeight: '430px', maxWidth: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
+          <Chart data={filteredHistory} />
+        </div>
+
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <input
+              type="number"
+              value={amount}
+              onChange={(e) => setAmount(parseFloat(e.target.value))}
+              placeholder="Enter amount"
+              style={{ padding: '10px', fontSize: '16px', width: '100%', maxWidth: '300px', borderRadius: '5px', border: '1px solid #ccc' }}
+          />
+        </div>
+
+        <div style={styles.actionButtonsContainer}>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <button
+                style={styles.buyButton}
+                onClick={handleBuy}
+            >
+              Buy
+            </button>
+            {!isNaN(amount) && !(amount === 0) && (
+                <span>
+              Total: {(amount * currencyData.history.at(-1).bid).toFixed(4).toString()}
+            </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <button
+                style={styles.sellButton}
+                onClick={handleSell}
+            >
+              Sell
+            </button>
+            {!isNaN(amount) && !(amount === 0) && (
+                <span>
+              Total: {(amount * currencyData.rate).toFixed(4).toString()}
+            </span>
+            )}
+          </div>
         </div>
       </div>
-    </div>
   );
 };
 

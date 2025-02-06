@@ -18,12 +18,12 @@ export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [currencies, setCurrencies] = useState([]);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [balances, setBalances] = useState({ PLN: 1000 }); // Начальный баланс только в PLN
+  const [balances, setBalances] = useState({ PLN: 1000 }); // Initial balance in PLN
   const [lastOnline, setLastOnline] = useState(new Date().toLocaleString());
   const [transactions, setTransactions] = useState([]);
   const [favoriteCurrencies, setFavoriteCurrencies] = useState([]);
 
-  // Загрузка данных при монтировании
+  // Load data on mount
   useEffect(() => {
     const loadData = async () => {
       const profileData = await getProfileData();
@@ -35,7 +35,7 @@ export const AppProvider = ({ children }) => {
       const transactionsData = await getTransactionsData();
       if (transactionsData) setTransactions(transactionsData);
 
-      // Загружаем избранные валюты из IndexedDB
+      // Load favorite currencies from IndexedDB
       const favorites = await getFavoriteCurrenciesFromDB();
       setFavoriteCurrencies(favorites);
     };
@@ -43,7 +43,7 @@ export const AppProvider = ({ children }) => {
     loadData();
   }, []);
 
-  // Сохранение данных при изменении
+  // Save data when changes occur
   useEffect(() => {
     if (user) saveProfileData(user);
   }, [user]);
@@ -56,14 +56,14 @@ export const AppProvider = ({ children }) => {
     if (transactions) saveTransactionsData(transactions);
   }, [transactions]);
 
-  // Сохранение избранных валют при изменении
+  // Save favorite currencies when changes occur
   useEffect(() => {
     if (favoriteCurrencies.length > 0) {
       saveFavoriteCurrencies(favoriteCurrencies);
     }
   }, [favoriteCurrencies]);
 
-  // Отслеживание состояния сети
+  // Monitor network status
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true);
@@ -81,23 +81,23 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   return (
-    <AppContext.Provider
-      value={{
-        user,
-        setUser,
-        currencies,
-        setCurrencies,
-        isOnline,
-        balances,
-        setBalances,
-        lastOnline,
-        saveCurrencyData,
-        getCurrencyData,
-        favoriteCurrencies,
-        setFavoriteCurrencies,
-      }}
-    >
-      {children}
-    </AppContext.Provider>
+      <AppContext.Provider
+          value={{
+            user,
+            setUser,
+            currencies,
+            setCurrencies,
+            isOnline,
+            balances,
+            setBalances,
+            lastOnline,
+            saveCurrencyData,
+            getCurrencyData,
+            favoriteCurrencies,
+            setFavoriteCurrencies,
+          }}
+      >
+        {children}
+      </AppContext.Provider>
   );
 };

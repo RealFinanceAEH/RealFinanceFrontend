@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { styles } from '../styles/styles';
 import { getProfile } from '../services/api';
-import { getProfilePhoto } from '../services/db'; // Импортируем функции работы с IndexedDB
+import { getProfilePhoto } from '../services/db'; // Import functions for working with IndexedDB
 
 const SideMenu = ({ onCloseMenu }) => {
   const [user, setUser] = useState({
@@ -10,10 +10,10 @@ const SideMenu = ({ onCloseMenu }) => {
     lastName: '',
     email: '',
   });
-  const [profilePhoto, setProfilePhoto] = useState('https://surl.li/uwuvai'); // Заглушка для фото
+  const [profilePhoto, setProfilePhoto] = useState('https://surl.li/uwuvai');
   const navigate = useNavigate();
 
-  // Получение данных профиля
+  // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -25,12 +25,12 @@ const SideMenu = ({ onCloseMenu }) => {
         });
 
       } catch (error) {
-        console.error('Ошибка при загрузке профиля:', error);
+        console.error('Error loading profile:', error);
       }
     };
 
     const fetchStoredPhoto = async () => {
-      let storedPhoto = await getProfilePhoto(user.email); // Теперь по email
+      let storedPhoto = await getProfilePhoto(user.email);
       if (storedPhoto) {
         setProfilePhoto(storedPhoto);
       }
@@ -38,66 +38,62 @@ const SideMenu = ({ onCloseMenu }) => {
 
     fetchProfile();
     fetchStoredPhoto();
-  }, [user.email]); // Загружаем фото каждый раз, когда меняется email пользователя
+  }, [user.email]);
 
-  // Выход из аккаунта
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
   };
 
   return (
-    <div style={{ padding: '20px', height: '20%', display: 'flex', flexDirection: 'column' }}>
-      {/* Верхняя часть с фото и данными пользователя */}
-      <div style={styles.userInfo}>
-        <img src={profilePhoto} alt="Фото профиля" style={styles.userPhoto} />
-        <div>
-          <h3 style={styles.userName}>{user.firstName} {user.lastName}</h3>
-          <p style={styles.userEmail}>{user.email}</p>
+      <div style={{ padding: '20px', height: '20%', display: 'flex', flexDirection: 'column' }}>
+        <div style={styles.userInfo}>
+          <img src={profilePhoto} alt="Profile" style={styles.userPhoto} />
+          <div>
+            <h3 style={styles.userName}>{user.firstName} {user.lastName}</h3>
+            <p style={styles.userEmail}>{user.email}</p>
+          </div>
         </div>
+
+        <ul style={styles.menuList}>
+          <li style={styles.menuItem}>
+            <Link to="/" style={styles.menuLink} onClick={onCloseMenu}>
+              Home
+            </Link>
+          </li>
+          <li style={styles.menuItem}>
+            <Link to="/profile" style={styles.menuLink} onClick={onCloseMenu}>
+              Profile
+            </Link>
+          </li>
+          <li style={styles.menuItem}>
+            <Link to="/settings" style={styles.menuLink} onClick={onCloseMenu}>
+              Settings
+            </Link>
+          </li>
+          <li style={styles.menuItem}>
+            <Link to="/support" style={styles.menuLink} onClick={onCloseMenu}>
+              Support
+            </Link>
+          </li>
+        </ul>
+
+        <button
+            onClick={handleLogout}
+            style={{
+              ...styles.logoutButton,
+              marginTop: 'auto',
+              backgroundColor: '#f44336',
+              color: 'white',
+              padding: '10px',
+              borderRadius: '5px',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+        >
+          Logout
+        </button>
       </div>
-
-      {/* Список ссылок */}
-      <ul style={styles.menuList}>
-        <li style={styles.menuItem}>
-          <Link to="/" style={styles.menuLink} onClick={onCloseMenu}>
-            Главная
-          </Link>
-        </li>
-        <li style={styles.menuItem}>
-          <Link to="/profile" style={styles.menuLink} onClick={onCloseMenu}>
-            Профиль
-          </Link>
-        </li>
-        <li style={styles.menuItem}>
-          <Link to="/settings" style={styles.menuLink} onClick={onCloseMenu}>
-            Настройки
-          </Link>
-        </li>
-        <li style={styles.menuItem}>
-          <Link to="/support" style={styles.menuLink} onClick={onCloseMenu}>
-            Поддержка
-          </Link>
-        </li>
-      </ul>
-
-      {/* Кнопка выхода */}
-      <button
-        onClick={handleLogout}
-        style={{
-          ...styles.logoutButton,
-          marginTop: 'auto', // Поднимаем кнопку вверх
-          backgroundColor: '#f44336', // Красный цвет для кнопки выхода
-          color: 'white',
-          padding: '10px',
-          borderRadius: '5px',
-          border: 'none',
-          cursor: 'pointer',
-        }}
-      >
-        Выйти
-      </button>
-    </div>
   );
 };
 

@@ -12,26 +12,26 @@ import {
 } from 'chart.js';
 
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
 );
 
 const Chart = ({ data }) => {
   if (!data || data.length === 0) {
-    return <div>Нет данных для отображения</div>;
+    return <div>No data to display</div>;
   }
 
   const chartData = {
-    labels: data.map((item) => item.effective_date), // Используем даты как метки
+    labels: data.map((item) => item.effective_date),
     datasets: [
       {
-        label: 'Курс',
-        data: data.map((item) => item.ask), // Используем цену покупки (ask) как данные
+        label: 'Rate',
+        data: data.map((item) => item.ask),
         borderColor: 'rgba(75,192,192,1)',
         fill: false,
       },
@@ -40,18 +40,28 @@ const Chart = ({ data }) => {
 
   const options = {
     responsive: true,
+    maintainAspectRatio: false, // Disable aspect ratio preservation
     plugins: {
       legend: {
         position: 'top',
       },
       title: {
         display: true,
-        text: 'График изменения курса',
+        text: 'Exchange Rate Chart',
       },
     },
   };
 
-  return <Line data={chartData} options={options} />;
+  const containerStyle = {
+    width: '100%', // Occupy full available width
+    height: '400px', // Fixed height
+  };
+
+  return (
+      <div style={containerStyle}>
+        <Line data={chartData} options={options} />
+      </div>
+  );
 };
 
 export default Chart;

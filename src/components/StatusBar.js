@@ -3,17 +3,14 @@ import { AppContext } from '../context/AppContext';
 
 const StatusBar = () => {
     const { isOnline, lastOnline } = useContext(AppContext);
-    const [isVisible, setIsVisible] = useState(true); // Устанавливаем, что плашка всегда видна в начале
+    const [isVisible, setIsVisible] = useState(true);
 
     useEffect(() => {
         if (isOnline) {
-            // Если соединение восстановилось, показываем плашку с анимацией
             setIsVisible(true);
-            // Затем скрываем через 3 секунды
             const timeout = setTimeout(() => setIsVisible(false), 3000);
             return () => clearTimeout(timeout);
         } else {
-            // Если оффлайн, плашка остается видимой, пока статус не станет онлайн
             setIsVisible(true);
         }
     }, [isOnline]);
@@ -31,11 +28,11 @@ const StatusBar = () => {
                 padding: '10px',
                 zIndex: 1000,
                 opacity: isVisible ? 1 : 0,
-                transition: 'opacity 1s ease-in-out, transform 1s ease-in-out', // Плавное исчезновение и появление
-                transform: isVisible ? 'translateY(0)' : 'translateY(-100%)', // Плавное перемещение вверх
+                transition: 'opacity 1s ease-in-out, transform 1s ease-in-out',
+                transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
             }}
         >
-            {isOnline ? 'Онлайн' : `Оффлайн (последнее подключение: ${lastOnline})`}
+            {isOnline ? 'Online' : `Offline (last connected: ${lastOnline})`}
         </div>
     );
 };
