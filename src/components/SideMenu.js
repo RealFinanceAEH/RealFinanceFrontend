@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { styles } from '../styles/styles';
 import { getProfile } from '../services/api';
+import { getProfilePhoto } from '../services/db'; // Импортируем функции работы с IndexedDB
 
 const SideMenu = ({ onCloseMenu }) => {
   const [user, setUser] = useState({
-    photo: '',
     firstName: '',
     lastName: '',
     email: '',
   });
+  const [profilePhoto, setProfilePhoto] = useState('https://surl.li/uwuvai'); // Заглушка для фото
   const navigate = useNavigate();
 
   // Получение данных профиля
@@ -18,18 +19,26 @@ const SideMenu = ({ onCloseMenu }) => {
       try {
         const profileData = await getProfile();
         setUser({
-          photo: profileData.photo || 'https://surl.li/uwuvai',
           firstName: profileData.firstname,
           lastName: profileData.lastname,
           email: profileData.email,
         });
+
       } catch (error) {
         console.error('Ошибка при загрузке профиля:', error);
       }
     };
 
+    const fetchStoredPhoto = async () => {
+      let storedPhoto = await getProfilePhoto(user.email); // Теперь по email
+      if (storedPhoto) {
+        setProfilePhoto(storedPhoto);
+      }
+    };
+
     fetchProfile();
-  }, []);
+    fetchStoredPhoto();
+  }, [user.email]); // Загружаем фото каждый раз, когда меняется email пользователя
 
   // Выход из аккаунта
   const handleLogout = () => {
@@ -41,7 +50,7 @@ const SideMenu = ({ onCloseMenu }) => {
     <div style={{ padding: '20px', height: '20%', display: 'flex', flexDirection: 'column' }}>
       {/* Верхняя часть с фото и данными пользователя */}
       <div style={styles.userInfo}>
-        <img src={user.photo} alt="Фото профиля" style={styles.userPhoto} />
+        <img src={profilePhoto} alt="Фото профиля" style={styles.userPhoto} />
         <div>
           <h3 style={styles.userName}>{user.firstName} {user.lastName}</h3>
           <p style={styles.userEmail}>{user.email}</p>

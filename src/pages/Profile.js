@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { styles } from '../styles/styles';
-import {getProfile, getWallet, getTransactions, depositFunds, withdrawFunds} from '../services/api';
+import { getProfile, getWallet, getTransactions, depositFunds, withdrawFunds } from '../services/api';
+import {
+    saveProfileData, getProfileData,
+    saveBalanceData, getBalanceData,
+    saveTransactionsData, getTransactionsData,
+    saveProfilePhoto, getProfilePhoto
+} from '../services/db'; // Добавил работу с IndexedDB
+
 
 const Profile = () => {
   const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -30,76 +37,111 @@ const Profile = () => {
   const [transactions, setTransactions] = useState([]);
   const [depositAmount, setDepositAmount] = useState('');
 
-  // Загрузка данных профиля, баланса и транзакций
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Получаем данные профиля
-        const profileData = await getProfile();
-        setUser({
-          firstName: profileData.firstname, // Обратите внимание на регистр
-          lastName: profileData.lastname,   // Обратите внимание на регистр
-          email: profileData.email,
-          phone: profileData.phone,
-        });
+// В useEffect при загрузке данных
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                let profileData, walletData, transactionsData, storedPhoto;
 
-        // Получаем баланс
-        const walletData = await getWallet();
-        setBalance(walletData); // Убедитесь, что walletData — это объект
+                if (navigator.onLine) {
+                    // Загружаем онлайн-данные и сохраняем их
+                    profileData = await getProfile();
+                    setUser({
+                        firstName: profileData.firstname,
+                        lastName: profileData.lastname,
+                        email: profileData.email,
+                        phone: profileData.phone,
+                    });
+                    await saveProfileData(profileData);
 
-        // Получаем историю транзакций
-        const transactionsData = await getTransactions();
-        setTransactions(transactionsData); // Убедитесь, что transactionsData — это массив
-      } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
+                    walletData = await getWallet();
+                    setBalance(walletData);
+                    await saveBalanceData(walletData);
+
+                    transactionsData = await getTransactions();
+                    setTransactions(transactionsData);
+                    await saveTransactionsData(transactionsData);
+                } else {
+                    // Загружаем оффлайн-данные из IndexedDB
+                    profileData = await getProfileData();
+                    if (profileData) {
+                        setUser({
+                            firstName: profileData.firstname,
+                            lastName: profileData.lastname,
+                            email: profileData.email,
+                            phone: profileData.phone,
+                        });
+                    }
+
+                    walletData = await getBalanceData();
+                    if (walletData) {
+                        setBalance(walletData);
+                    }
+
+                    transactionsData = await getTransactionsData();
+                    if (transactionsData) {
+                        setTransactions(transactionsData);
+                    }
+                }
+
+                // 📸 Загружаем сохранённое фото из IndexedDB, используя email
+                storedPhoto = await getProfilePhoto(user.email); // Теперь по email
+                if (storedPhoto) {
+                    setProfilePhoto(storedPhoto);
+                }
+            } catch (error) {
+                console.error('Ошибка при загрузке данных:', error);
+            }
+        };
+
+        fetchData();
+    }, [user.email]); // Добавил зависимость от user.email
+
+// В компоненте Profile
+const handleUploadPhoto = async () => {
+  try {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file && user.email) { // Используем user.email
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const newPhoto = event.target.result;
+          setProfilePhoto(newPhoto);
+          await saveProfilePhoto(user.email, newPhoto); // Сохраняем фото с привязкой к email
+        };
+        reader.readAsDataURL(file);
       }
     };
+    fileInput.click();
+  } catch (error) {
+    console.error('Ошибка при загрузке фото:', error);
+  }
+};
 
-    fetchData();
-  }, []);
+    useEffect(() => {
+        // Создаем копию массива
+        const sortedTransactions = [...transactions];
 
-  useEffect(() => {
-    // Создаем копию массива
-    const sortedTransactions = [...transactions];
+        // Сортируем по timestamp от самых новых к самым старым
+        sortedTransactions.sort((a, b) => {
+            const timestampA = new Date(a.timestamp);
+            const timestampB = new Date(b.timestamp);
 
-    // Сортируем по timestamp от самых новых к самым старым
-    sortedTransactions.sort((a, b) => {
-      const timestampA = new Date(a.timestamp);
-      const timestampB = new Date(b.timestamp);
+            return timestampB - timestampA;  // Сортировка от самых новых
+        });
 
-      return timestampB - timestampA;  // Сортировка от самых новых
-    });
-
-    // Проверяем, изменился ли порядок, чтобы избежать повторных установок
-    if (JSON.stringify(sortedTransactions) !== JSON.stringify(transactions)) {
-      setTransactions(sortedTransactions);
-    }
-  }, [transactions]);  // Следим за изменениями transactions
-
-  // Функция для загрузки фото
-  const handleUploadPhoto = async () => {
-    try {
-      const fileInput = document.createElement('input');
-      fileInput.type = 'file';
-      fileInput.accept = 'image/*';
-      fileInput.capture = 'camera'; // Для мобильных устройств
-      fileInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            setProfilePhoto(event.target.result);
-          };
-          reader.readAsDataURL(file);
+        // Проверяем, изменился ли порядок, чтобы избежать повторных установок
+        if (JSON.stringify(sortedTransactions) !== JSON.stringify(transactions)) {
+            setTransactions(sortedTransactions);
         }
-      };
-      fileInput.click();
-    } catch (error) {
-      console.error('Ошибка при загрузке фото:', error);
-    }
-  };
+    }, [transactions]);  // Следим за изменениями transactions
 
-  // Функция для пополнения баланса
+
+    // Функция для пополнения баланса
+  // 🔹 Функция для пополнения баланса
   const handleDeposit = async () => {
     if (!depositAmount || isNaN(depositAmount) || depositAmount <= 0) {
       alert('Введите корректную сумму для пополнения');

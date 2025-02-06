@@ -8,6 +8,8 @@ import {
   getTransactionsData,
   saveCurrencyData,
   getCurrencyData,
+  saveFavoriteCurrencies,
+  getFavoriteCurrenciesFromDB,
 } from '../services/db';
 
 export const AppContext = createContext();
@@ -19,6 +21,7 @@ export const AppProvider = ({ children }) => {
   const [balances, setBalances] = useState({ PLN: 1000 }); // Начальный баланс только в PLN
   const [lastOnline, setLastOnline] = useState(new Date().toLocaleString());
   const [transactions, setTransactions] = useState([]);
+  const [favoriteCurrencies, setFavoriteCurrencies] = useState([]);
 
   // Загрузка данных при монтировании
   useEffect(() => {
@@ -31,6 +34,10 @@ export const AppProvider = ({ children }) => {
 
       const transactionsData = await getTransactionsData();
       if (transactionsData) setTransactions(transactionsData);
+
+      // Загружаем избранные валюты из IndexedDB
+      const favorites = await getFavoriteCurrenciesFromDB();
+      setFavoriteCurrencies(favorites);
     };
 
     loadData();
@@ -48,6 +55,13 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     if (transactions) saveTransactionsData(transactions);
   }, [transactions]);
+
+  // Сохранение избранных валют при изменении
+  useEffect(() => {
+    if (favoriteCurrencies.length > 0) {
+      saveFavoriteCurrencies(favoriteCurrencies);
+    }
+  }, [favoriteCurrencies]);
 
   // Отслеживание состояния сети
   useEffect(() => {
@@ -79,6 +93,8 @@ export const AppProvider = ({ children }) => {
         lastOnline,
         saveCurrencyData,
         getCurrencyData,
+        favoriteCurrencies,
+        setFavoriteCurrencies,
       }}
     >
       {children}

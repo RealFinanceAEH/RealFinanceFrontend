@@ -160,9 +160,17 @@ export const getCurrencyRate = async (currencyCode) => {
   }
 };
 
-// Получение истории курса валюты
-export const getCurrencyHistory = async (currencyCode, startDate, endDate) => {
-  return fetchApi(`/currency/currency-rates/${currencyCode}?start_date=${startDate}&end_date=${endDate}`, 'GET');
+// Получение истории курса валюты за год
+export const getCurrencyHistory = async (currencyCode) => {
+  const endDate = new Date().toISOString().split('T')[0];
+  const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  const response = await fetchApi(
+    `/currency/currency-rates/${currencyCode}?start_date=${startDate}&end_date=${endDate}`,
+    'GET'
+  );
+
+  return response;
 };
 
 // Покупка валюты
