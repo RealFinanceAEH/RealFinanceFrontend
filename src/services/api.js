@@ -72,8 +72,13 @@ export const getTransactions = async () => fetchApi('/transactions/transactions'
 /** Deposits funds into the user's account. */
 export const depositFunds = async (amount) => fetchApi('/user/deposit', 'POST', { amount }, { Authorization: `Bearer ${localStorage.getItem('token')}` });
 
-/** Withdraws funds from the user's account. */
-export const withdrawFunds = async (amount) => fetchApi('/user/withdraw', 'POST', { amount }, { Authorization: `Bearer ${localStorage.getItem('token')}` });
+// Снятие средств
+export const withdrawFunds = async (currencyCode, amount) => {
+  const token = localStorage.getItem('token');
+  return fetchApi('/user/withdraw', 'POST', { currency_code: currencyCode, amount }, {
+    Authorization: `Bearer ${token}`,
+  });
+};
 
 /** Retrieves the list of favorite currencies. */
 export const getFavoriteCurrencies = async () => fetchApi('/user/favorites', 'GET', null, { Authorization: `Bearer ${localStorage.getItem('token')}` });
