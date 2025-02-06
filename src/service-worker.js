@@ -35,7 +35,7 @@ registerRoute(
 // Cache API responses
 const API_CACHE_NAME = 'api-cache-v1';
 registerRoute(
-  ({ url }) => url.origin === 'https://5-22-220-180.pl-waw1.upcloud.host/api', // Замените на ваш бэкенд
+  ({ url }) => url.origin === 'https://5-22-220-180.pl-waw1.upcloud.host/api',
   new StaleWhileRevalidate({
     cacheName: API_CACHE_NAME,
     plugins: [
@@ -79,7 +79,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
 
   // Обрабатываем запросы к API
-  if (request.url.startsWith('https://5-22-220-180.pl-waw1.upcloud.host/api')) { // Замените на ваш бэкенд
+  if (request.url.startsWith('https://5-22-220-180.pl-waw1.upcloud.host/api')) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         // Возвращаем закэшированный ответ, если он есть
