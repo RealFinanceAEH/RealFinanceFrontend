@@ -10,6 +10,7 @@ const Home = () => {
   const { currencies, setCurrencies, isOnline, saveCurrencyData, getCurrencyData } = useContext(AppContext);
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteCurrencies, setFavoriteCurrencies] = useState([]);
+  const [searchInput, setSearchInput] = useState('');
 
   // Загрузка данных
   useEffect(() => {
@@ -76,14 +77,36 @@ const Home = () => {
     return <div>Загрузка...</div>;
   }
 
+  const handleSearchChange = (event) => {
+    setSearchInput(event.target.value); // Обновляем состояние с введенным значением
+  };
+
+  const filterCurrencyBySearch = (currency, searchInput) => {
+    if (!searchInput) return true; // Если нет поиска, показываем все валюты
+    const lowerCaseSearchInput = searchInput.toLowerCase();
+    const lowerCaseCurrencyCode = currency.code.toLowerCase();
+    return lowerCaseCurrencyCode.includes(lowerCaseSearchInput); // Теперь проверяем, содержит ли код валюты строку поиска
+  };
+
+
   return (
     <div style={styles.homeContainer}>
+
+      <div style={styles.searchContainer}>
+        <input style={styles.searchInput}
+            type="text"
+            placeholder="Введите запрос..."
+            value={searchInput}
+            onChange={handleSearchChange} // Обработчик изменения
+        />
+      </div>
+
       {/* Верхняя синяя часть */}
       <div style={styles.topSection}>
         <h1>Отслеживаемые валюты</h1>
         <div style={styles.currencyList}>
           {currencies
-            .filter((currency) => currency.isTracked)
+            .filter((currency) => currency.isTracked && filterCurrencyBySearch(currency, searchInput))
             .map((currency) => (
               <CurrencyCard
                 key={currency.code}
@@ -101,7 +124,7 @@ const Home = () => {
         <h2 style={styles.sectionTitle}>Все валюты</h2>
         <div style={styles.currencyList}>
           {currencies
-            .filter((currency) => !currency.isTracked)
+            .filter((currency) => !currency.isTracked && filterCurrencyBySearch(currency, searchInput))
             .map((currency) => (
               <CurrencyCard
                 key={currency.code}

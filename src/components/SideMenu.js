@@ -38,7 +38,7 @@ const SideMenu = ({ onCloseMenu }) => {
   };
 
   return (
-    <div style={{ padding: '20px', height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ padding: '20px', height: '20%', display: 'flex', flexDirection: 'column' }}>
       {/* Верхняя часть с фото и данными пользователя */}
       <div style={styles.userInfo}>
         <img src={user.photo} alt="Фото профиля" style={styles.userPhoto} />

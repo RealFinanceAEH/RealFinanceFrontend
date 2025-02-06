@@ -6,6 +6,7 @@ import { getCurrencyRate, getCurrencyHistory, buyCurrency, sellCurrency } from '
 import { saveCurrencyData, getCurrencyData } from '../services/db';
 import { styles } from '../styles/styles';
 
+// rate - это ask
 const CurrencyDetail = () => {
   const { currencyCode } = useParams();
   const { isOnline, setBalances } = useContext(AppContext);
@@ -149,7 +150,10 @@ const CurrencyDetail = () => {
   return (
     <div style={{ padding: '20px', fontFamily: 'Roboto, sans-serif' }}>
       <h1 style={styles.title}>{currencyData.name} ({currencyData.code})</h1>
-      <p style={styles.subtitle}>Текущий курс: {currencyData.rate} PLN</p>
+      <p style={styles.subtitle}>Цена продажи: {currencyData.rate} PLN</p>
+      {console.log("КАРЕНСИ ДАТА")}
+      {console.log(currencyData)}
+      <p style={styles.subtitle}>Цена покупки: {currencyData.history.at(-1).bid} PLN</p>
 
       <h2 style={styles.subtitle}>График изменения курса</h2>
       <div style={styles.periodButtonsContainer}>
@@ -193,18 +197,32 @@ const CurrencyDetail = () => {
       </div>
 
       <div style={styles.actionButtonsContainer}>
-        <button
-          style={styles.buyButton}
-          onClick={handleBuy}
-        >
-          Купить
-        </button>
-        <button
-          style={styles.sellButton}
-          onClick={handleSell}
-        >
-          Продать
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <button
+            style={styles.buyButton}
+            onClick={handleBuy}
+          >
+            Купить
+          </button>
+          {!isNaN(amount) && !(amount === 0) && (
+          <span>
+            Всего: {(amount * currencyData.history.at(-1).bid).toFixed(4).toString()}
+          </span>
+              )}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <button
+            style={styles.sellButton}
+            onClick={handleSell}
+          >
+            Продать
+          </button>
+          {!isNaN(amount) && !(amount === 0) && (
+              <span>
+                Всего: {(amount * currencyData.rate).toFixed(4).toString()}
+              </span>
+          )}
+        </div>
       </div>
     </div>
   );

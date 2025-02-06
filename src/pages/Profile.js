@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { styles } from '../styles/styles';
-import { getProfile, getWallet, getTransactions, depositFunds } from '../services/api';
+import {getProfile, getWallet, getTransactions, depositFunds, withdrawFunds} from '../services/api';
 
 const Profile = () => {
   const [isBalanceOpen, setIsBalanceOpen] = useState(false);
@@ -13,6 +13,20 @@ const Profile = () => {
     phone: '',
   });
   const [balance, setBalance] = useState({});
+  /**
+   * @typedef {Object} Transaction
+   * @property {string} amount - Сумма транзакции.
+   * @property {string} currency_code - Код валюты (например, "EUR").
+   * @property {string} final_currency_balance - Баланс после транзакции в исходной валюте.
+   * @property {string} final_pln_balance - Баланс после транзакции в PLN.
+   * @property {number} id - Уникальный идентификатор транзакции.
+   * @property {string} timestamp - Время транзакции в формате UTC.
+   * @property {string} transaction_type - Тип транзакции, например "buy" или "sell".
+   */
+
+  /**
+   * @type {Transaction[]}
+   */
   const [transactions, setTransactions] = useState([]);
   const [depositAmount, setDepositAmount] = useState('');
 
@@ -43,6 +57,24 @@ const Profile = () => {
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Создаем копию массива
+    const sortedTransactions = [...transactions];
+
+    // Сортируем по timestamp от самых новых к самым старым
+    sortedTransactions.sort((a, b) => {
+      const timestampA = new Date(a.timestamp);
+      const timestampB = new Date(b.timestamp);
+
+      return timestampB - timestampA;  // Сортировка от самых новых
+    });
+
+    // Проверяем, изменился ли порядок, чтобы избежать повторных установок
+    if (JSON.stringify(sortedTransactions) !== JSON.stringify(transactions)) {
+      setTransactions(sortedTransactions);
+    }
+  }, [transactions]);  // Следим за изменениями transactions
 
   // Функция для загрузки фото
   const handleUploadPhoto = async () => {
@@ -86,6 +118,26 @@ const Profile = () => {
     }
   };
 
+  const handleWithdraw = async () => {
+    console.log(balance.PLN)
+    console.log(depositAmount);
+    if (!depositAmount || isNaN(depositAmount) || depositAmount <= 0 || parseFloat(depositAmount) > parseFloat(balance.PLN)) {
+      alert('Введите корректную сумму для снятия');
+      return;
+    }
+
+    try {
+      await withdrawFunds(parseFloat(depositAmount));
+      const walletData = await getWallet();
+      setBalance(walletData); // Обновляем весь объект баланса
+      alert('Баланс успешно снят');
+      setDepositAmount('');
+    } catch (error) {
+      console.error('Ошибка при снятии денег со счёта:', error);
+      alert('Не удалось снять деньги со счёта');
+    }
+  };
+
   return (
     <div style={styles.profileContainer}>
       {/* Блок с фото и данными пользователя */}
@@ -119,7 +171,7 @@ const Profile = () => {
                 {currency}: {balance[currency]}
               </p>
             ))}
-            <div style={{ marginTop: '10px' }}>
+            <div style={{ marginTop: '10px', justifyContent: 'space-between' }}>
               <input
                 type="number"
                 value={depositAmount}
@@ -129,6 +181,9 @@ const Profile = () => {
               />
               <button onClick={handleDeposit} style={styles.uploadButton}>
                 Пополнить баланс
+              </button>
+              <button onClick={handleWithdraw} style={styles.uploadButton}>
+                Снять баланс
               </button>
             </div>
           </div>
@@ -145,14 +200,28 @@ const Profile = () => {
           <span>{isHistoryOpen ? '▲' : '▼'}</span>
         </div>
         {isHistoryOpen && (
-          <div style={styles.profileSectionContent}>
-            {transactions.map((transaction) => (
-              <div key={transaction.id} style={{ marginBottom: '10px' }}>
-                <p><strong>{transaction.timestamp}</strong>: {transaction.amount} {transaction.currency_code}</p>
-                <p>{transaction.transaction_type}</p>
-              </div>
-            ))}
-          </div>
+            <div style={styles.profileSectionContent}>
+              {transactions.map((transaction) => (
+                  <div key={transaction.id} style={styles.transactionItem}>
+                    <p><strong>Date: {new Date(transaction.timestamp).toLocaleString()}</strong></p>
+                    <p>
+                      {transaction.transaction_type === "buy" ? "Bought" : "Sold"}:
+                      {parseFloat(transaction.amount).toString()} {transaction.currency_code}
+                    </p>
+                    <p>
+                      Final currency balance: {parseFloat(transaction.final_currency_balance).toString()} {transaction.currency_code}
+                    </p>
+                    <p>
+                      Final PLN balance: {parseFloat(transaction.final_pln_balance).toString()} PLN
+                    </p>
+                    {transaction.price && (
+                        <p>
+                          Price: {parseFloat(transaction.price).toString()} {transaction.currency_code} per unit
+                        </p>
+                    )}
+                  </div>
+              ))}
+            </div>
         )}
       </div>
     </div>

@@ -1,6 +1,33 @@
 // src/services/api.js
 const API_BASE_URL = 'https://5-22-220-180.pl-waw1.upcloud.host/api';
 
+class FetchError extends Error {
+  constructor(response) {
+    // Составляем сообщение ошибки, которое будет отображаться в Error
+    const message = `Request failed with status: ${response.status}`;
+
+    // Вызываем конструктор родительского класса (Error)
+    super(message);
+
+    // Устанавливаем имя ошибки
+    this.name = 'FetchError';
+
+    // Сохраняем объект response
+    this.response = response;
+
+    // Устанавливаем структуру error (как объект)
+    this.error = {
+      error: message,  // Сообщение об ошибке
+      response: response,  // Объект response
+    };
+
+    // Чтобы исключение корректно работало в стеке вызовов
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, FetchError);
+    }
+  }
+}
+
 // Функция для выполнения запросов
 const fetchApi = async (endpoint, method = 'GET', body = null, headers = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
@@ -17,7 +44,12 @@ const fetchApi = async (endpoint, method = 'GET', body = null, headers = {}) => 
     const response = await fetch(url, options);
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      /**
+      // При ошибке выдаёт следующую структуру:
+      //
+      // @param {"error": string, "response":}
+      */
+      throw new FetchError(response);
     }
     return await response.json();
   } catch (error) {
@@ -81,6 +113,14 @@ export const getTransactions = async () => {
 export const depositFunds = async (amount) => {
   const token = localStorage.getItem('token');
   return fetchApi('/user/deposit', 'POST', { amount }, {
+    Authorization: `Bearer ${token}`,
+  });
+};
+
+// Пополнение баланса
+export const withdrawFunds = async (amount) => {
+  const token = localStorage.getItem('token');
+  return fetchApi('/user/withdraw', 'POST', { amount }, {
     Authorization: `Bearer ${token}`,
   });
 };
