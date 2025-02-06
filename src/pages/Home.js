@@ -8,17 +8,16 @@ import { getCurrencyData, saveCurrencyData, saveFavoriteCurrencies, getFavoriteC
 
 const Home = () => {
   const { currencies, setCurrencies, isOnline } = useContext(AppContext);
-  const [isLocalOnline, setIsLocalOnline] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [favoriteCurrencies, setFavoriteCurrencies] = useState([]);
   const [searchInput, setSearchInput] = useState('');
 
-  // Функция для добавления/удаления валюты из избранного
+  // Handle toggle track of a currency
   const handleToggleTrack = async (currencyCode) => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Пользователь не авторизован');
+        alert('User is not authorized');
         return;
       }
 
@@ -32,31 +31,30 @@ const Home = () => {
         setFavoriteCurrencies((prev) => [...prev, currencyCode]);
       }
 
-      // Обновляем состояние валют
+      // Update currency states
       setCurrencies((prevCurrencies) =>
-        prevCurrencies.map((currency) =>
-          currency.code === currencyCode
-            ? { ...currency, isTracked: !isTracked }
-            : currency
-        )
+          prevCurrencies.map((currency) =>
+              currency.code === currencyCode
+                  ? { ...currency, isTracked: !isTracked }
+                  : currency
+          )
       );
 
-      // Сохраняем избранные валюты в IndexedDB
+      // Save favorite currencies to IndexedDB
       await saveFavoriteCurrencies(favoriteCurrencies);
     } catch (error) {
-      console.error('Ошибка при изменении избранного:', error);
-      alert('Не удалось изменить избранное');
+      console.error('Error updating favorites:', error);
+      alert('Failed to update favorites');
     }
   };
 
-  // Загрузка данных
+  // Fetch data
   useEffect(() => {
-    let isMounted = true; // Флаг для проверки, что компонент все еще смонтирован
+    let isMounted = true;
 
     const fetchData = async () => {
       try {
         if (isOnline) {
-          // Загружаем все валюты с сервера
           const data = await getAllCurrencies();
           const formattedCurrencies = Object.keys(data).map((code) => ({
             code,
@@ -66,13 +64,11 @@ const Home = () => {
             bid: data[code].bid,
           }));
 
-          // Загружаем избранные валюты
           const favorites = await getFavoriteCurrencies();
           if (isMounted) {
             setFavoriteCurrencies(favorites.favorite_currencies || []);
           }
 
-          // Обновляем состояние валют
           const updatedCurrencies = formattedCurrencies.map((currency) => ({
             ...currency,
             isTracked: favorites.favorite_currencies.includes(currency.code),
@@ -82,32 +78,30 @@ const Home = () => {
             setCurrencies(updatedCurrencies);
           }
 
-          // Сохраняем данные о валютах и их историю в IndexedDB
           await Promise.all(
-            updatedCurrencies.map(async (currency) => {
-              const history = await getCurrencyHistory(currency.code);
-              await saveCurrencyData({
-                ...currency,
-                history, // Сохраняем историю курсов
-              });
-            })
+              updatedCurrencies.map(async (currency) => {
+                const history = await getCurrencyHistory(currency.code);
+                await saveCurrencyData({
+                  ...currency,
+                  history,
+                });
+              })
           );
 
-          // Сохраняем избранные валюты в IndexedDB
+          // Save favorite currencies to IndexedDB
           await saveFavoriteCurrencies(favorites.favorite_currencies || []);
         } else {
-          // Загружаем избранные валюты из IndexedDB
           const cachedFavorites = await getFavoriteCurrenciesFromDB();
           if (isMounted) {
             setFavoriteCurrencies(cachedFavorites);
           }
 
-          // Загружаем данные избранных валют из IndexedDB
+          // Load favorite currencies data from IndexedDB
           const cachedCurrencies = await Promise.all(
-            cachedFavorites.map(async (code) => {
-              const currencyData = await getCurrencyData(code);
-              return currencyData ? currencyData : null;
-            })
+              cachedFavorites.map(async (code) => {
+                const currencyData = await getCurrencyData(code);
+                return currencyData ? currencyData : null;
+              })
           );
 
           if (isMounted) {
@@ -115,7 +109,7 @@ const Home = () => {
           }
         }
       } catch (error) {
-        console.error('Ошибка при загрузке данных:', error);
+        console.error('Error loading data:', error);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -126,86 +120,91 @@ const Home = () => {
     fetchData();
 
     return () => {
-      isMounted = false; // Очистка при размонтировании компонента
+      isMounted = false;
     };
-  }, [isOnline]); // Зависимость только от isOnline
+  }, [isOnline]);
 
   useEffect(() => {
-    Notification.requestPermission().then(permission => {
-    if (permission === 'granted') {
-      // Уведомление через 1 минуту
-        new Notification('Привет!', {
-          body: 'Вы успешно вошли в систему!',
-        });
+    const isFirstLogin = localStorage.getItem('isFirstLogin');
+
+    if (isFirstLogin === null || isFirstLogin === 'true') {
+      localStorage.setItem('isFirstLogin', 'false');
+
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          new Notification('Hello!', {
+            body: 'You have successfully logged in!',
+          });
+        }
+      });
     }
-  })}, [])
+  }, []);
 
   if (isLoading) {
-    return <div>Загрузка...</div>;
+    return <div>Loading...</div>;
   }
 
   const handleSearchChange = (event) => {
-    setSearchInput(event.target.value); // Обновляем состояние с введенным значением
+    setSearchInput(event.target.value);
   };
 
   const filterCurrencyBySearch = (currency, searchInput) => {
-    if (!searchInput) return true; // Если нет поиска, показываем все валюты
+    if (!searchInput) return true;
     const lowerCaseSearchInput = searchInput.toLowerCase();
     const lowerCaseCurrencyCode = currency.code.toLowerCase();
-    return lowerCaseCurrencyCode.includes(lowerCaseSearchInput); // Теперь проверяем, содержит ли код валюты строку поиска
+    return lowerCaseCurrencyCode.includes(lowerCaseSearchInput);
   };
 
-
   return (
-    <div style={styles.homeContainer}>
+      <div style={styles.homeContainer}>
 
-      <div style={styles.searchContainer}>
-        <input style={styles.searchInput}
-            type="text"
-            placeholder="Введите запрос..."
-            value={searchInput}
-            onChange={handleSearchChange} // Обработчик изменения
-        />
-      </div>
+        <div style={styles.searchContainer}>
+          <input style={styles.searchInput}
+                 type="text"
+                 placeholder="Enter search query..."
+                 value={searchInput}
+                 onChange={handleSearchChange}
+          />
+        </div>
 
-      {/* Верхняя синяя часть */}
-      <div style={styles.topSection}>
-        <h1>Отслеживаемые валюты</h1>
-        <div style={styles.currencyList}>
-          {currencies
-            .filter((currency) => currency.isTracked && filterCurrencyBySearch(currency, searchInput))
-            .map((currency) => (
-              <CurrencyCard
-                key={currency.code}
-                currencyCode={currency.code}
-                isTracked={currency.isTracked}
-                ask={currency.ask}
-                bid={currency.bid}
-                onToggleTrack={() => handleToggleTrack(currency.code)}
-              />
-            ))}
+        {/* Top section with tracked currencies */}
+        <div style={styles.topSection}>
+          <h1>Tracked Currencies</h1>
+          <div style={styles.currencyList}>
+            {currencies
+                .filter((currency) => currency.isTracked && filterCurrencyBySearch(currency, searchInput))
+                .map((currency) => (
+                    <CurrencyCard
+                        key={currency.code}
+                        currencyCode={currency.code}
+                        isTracked={currency.isTracked}
+                        ask={currency.ask}
+                        bid={currency.bid}
+                        onToggleTrack={() => handleToggleTrack(currency.code)}
+                    />
+                ))}
+          </div>
+        </div>
+
+        {/* Bottom section with all currencies */}
+        <div style={styles.bottomSection}>
+          <h2 style={styles.sectionTitle}>All Currencies</h2>
+          <div style={styles.currencyList}>
+            {currencies
+                .filter((currency) => !currency.isTracked && filterCurrencyBySearch(currency, searchInput))
+                .map((currency) => (
+                    <CurrencyCard
+                        key={currency.code}
+                        currencyCode={currency.code}
+                        isTracked={currency.isTracked}
+                        ask={currency.ask}
+                        bid={currency.bid}
+                        onToggleTrack={() => handleToggleTrack(currency.code)}
+                    />
+                ))}
+          </div>
         </div>
       </div>
-
-      {/* Нижняя серая часть */}
-      <div style={styles.bottomSection}>
-        <h2 style={styles.sectionTitle}>Все валюты</h2>
-        <div style={styles.currencyList}>
-          {currencies
-            .filter((currency) => !currency.isTracked && filterCurrencyBySearch(currency, searchInput))
-            .map((currency) => (
-              <CurrencyCard
-                key={currency.code}
-                currencyCode={currency.code}
-                isTracked={currency.isTracked}
-                ask={currency.ask}
-                bid={currency.bid}
-                onToggleTrack={() => handleToggleTrack(currency.code)}
-              />
-            ))}
-        </div>
-      </div>
-    </div>
   );
 };
 
