@@ -1,0 +1,14 @@
+{
+  "files": {
+    "main.css": "/RealFinanceFrontend/static/css/main.b241469b.css",
+    "main.js": "/RealFinanceFrontend/static/js/main.c0f863f4.js",
+    "service-worker.js": "/RealFinanceFrontend/service-worker.js",
+    "index.html": "/RealFinanceFrontend/index.html",
+    "main.b241469b.css.map": "/RealFinanceFrontend/static/css/main.b241469b.css.map",
+    "main.c0f863f4.js.map": "/RealFinanceFrontend/static/js/main.c0f863f4.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.b241469b.css",
+    "static/js/main.c0f863f4.js"
+  ]
+}
