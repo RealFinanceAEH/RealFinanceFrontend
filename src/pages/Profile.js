@@ -21,8 +21,8 @@ const Profile = () => {
   const [balance, setBalance] = useState({});
   const [transactions, setTransactions] = useState([]);
   const [depositAmount, setDepositAmount] = useState('');
-  const [withdrawCurrency, setWithdrawCurrency] = useState('PLN'); // Валюта для снятия
-  const [withdrawAmount, setWithdrawAmount] = useState(''); // Сумма для снятия
+  const [withdrawCurrency, setWithdrawCurrency] = useState('PLN');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
 
   // useEffect for loading data
   useEffect(() => {
@@ -150,7 +150,7 @@ const Profile = () => {
     try {
       await withdrawFunds(withdrawCurrency, parseFloat(withdrawAmount));
       const walletData = await getWallet();
-      setBalance(walletData); // Обновляем баланс
+      setBalance(walletData);
       alert(`Successfully withdrew ${withdrawAmount} ${withdrawCurrency}`);
       setWithdrawAmount('');
     } catch (error) {
